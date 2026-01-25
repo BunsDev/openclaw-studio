@@ -7,7 +7,6 @@ type HeaderBarProps = {
   onProjectChange: (projectId: string) => void;
   onCreateProject: () => void;
   onDeleteProject: () => void;
-  onToggleConnection: () => void;
   onNewAgent: () => void;
   onCenterCanvas: () => void;
   zoom: number;
@@ -29,7 +28,6 @@ export const HeaderBar = ({
   onProjectChange,
   onCreateProject,
   onDeleteProject,
-  onToggleConnection,
   onNewAgent,
   onCenterCanvas,
   zoom,
@@ -80,25 +78,9 @@ export const HeaderBar = ({
         >
           Delete
         </button>
-        <span
-          className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ${statusStyles[status]}`}
-        >
-          {status}
-        </span>
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
-        <button
-          className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-            status === "connected"
-              ? "bg-emerald-500 text-white hover:bg-emerald-600"
-              : "border border-slate-300 text-slate-900 hover:border-slate-400"
-          }`}
-          type="button"
-          onClick={onToggleConnection}
-        >
-          Connection
-        </button>
         <button
           className="rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--accent-strong)]"
           type="button"

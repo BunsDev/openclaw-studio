@@ -65,7 +65,7 @@ export const AgentTile = ({
     window.addEventListener("pointerup", handleUp);
   };
 
-  const handleResizeStart = (event: React.PointerEvent<HTMLButtonElement>) => {
+  const handleResizeStart = (event: React.PointerEvent<HTMLDivElement>) => {
     event.stopPropagation();
     onSelect();
     if (event.button !== 0) return;
@@ -207,9 +207,8 @@ export const AgentTile = ({
           </button>
         </div>
       </div>
-      <button
-        className="absolute bottom-2 right-2 h-4 w-4 cursor-se-resize rounded-sm border border-slate-400 bg-white/80"
-        type="button"
+      <div
+        className="absolute bottom-0 right-0 h-16 w-16 cursor-se-resize"
         onPointerDown={handleResizeStart}
       />
     </div>

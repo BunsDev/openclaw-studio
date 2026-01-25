@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { CanvasViewport } from "../src/components/CanvasViewport";
-import { ConnectionPanel } from "../src/components/ConnectionPanel";
 import { HeaderBar } from "../src/components/HeaderBar";
 import { extractText } from "../src/lib/text/extractText";
 import { useGatewayConnection } from "../src/lib/gateway/useGatewayConnection";
@@ -49,9 +48,6 @@ const AgentCanvasPage = () => {
     status,
     gatewayUrl,
     token,
-    error: gatewayError,
-    connect,
-    disconnect,
     setGatewayUrl,
     setToken,
   } = useGatewayConnection();
@@ -59,7 +55,6 @@ const AgentCanvasPage = () => {
   const { state, dispatch, createTile, createProject, deleteProject } =
     useAgentCanvasStore();
   const project = getActiveProject(state);
-  const [showConnection, setShowConnection] = useState(false);
   const [showProjectForm, setShowProjectForm] = useState(false);
   const [projectName, setProjectName] = useState("");
   const [projectPath, setProjectPath] = useState("");
@@ -384,7 +379,6 @@ const AgentCanvasPage = () => {
               setShowProjectForm((prev) => !prev);
             }}
             onDeleteProject={handleProjectDelete}
-            onToggleConnection={() => setShowConnection((prev) => !prev)}
             onNewAgent={handleNewAgent}
             onCenterCanvas={handleCenterCanvas}
             zoom={state.canvas.zoom}
@@ -445,23 +439,6 @@ const AgentCanvasPage = () => {
                   </div>
                 ) : null}
               </div>
-            </div>
-          </div>
-        ) : null}
-
-        {showConnection ? (
-          <div className="pointer-events-auto mx-auto w-full max-w-4xl">
-            <div className="glass-panel px-6 py-6">
-              <ConnectionPanel
-                gatewayUrl={gatewayUrl}
-                token={token}
-                status={status}
-                error={gatewayError}
-                onGatewayUrlChange={setGatewayUrl}
-                onTokenChange={setToken}
-                onConnect={connect}
-                onDisconnect={disconnect}
-              />
             </div>
           </div>
         ) : null}
