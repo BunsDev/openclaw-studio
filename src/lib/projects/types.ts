@@ -36,6 +36,15 @@ export type ProjectCreateResult = {
   warnings: string[];
 };
 
+export type ProjectOpenPayload = {
+  path: string;
+};
+
+export type ProjectOpenResult = {
+  store: ProjectsStore;
+  warnings: string[];
+};
+
 export type ProjectDeleteResult = {
   store: ProjectsStore;
   warnings: string[];

@@ -34,6 +34,13 @@ export async function DELETE(
       return NextResponse.json({ error: "Tile not found." }, { status: 404 });
     }
 
+    const warnings: string[] = [];
+    if (!tile.agentId?.trim()) {
+      warnings.push(`Missing agentId for tile ${tile.id}; skipped agent cleanup.`);
+    } else {
+      deleteAgentArtifacts(tile.agentId, warnings);
+    }
+
     const nextTiles = project.tiles.filter((entry) => entry.id !== trimmedTileId);
     if (nextTiles.length === project.tiles.length) {
       return NextResponse.json({ error: "Tile not found." }, { status: 404 });
@@ -48,7 +55,7 @@ export async function DELETE(
       ),
     };
     saveStore(nextStore);
-    return NextResponse.json({ store: nextStore, warnings: [] });
+    return NextResponse.json({ store: nextStore, warnings });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to delete tile.";
     console.error(message);
@@ -194,4 +201,26 @@ const renameDirIfExists = (
     throw new Error(`${label} path is not a directory: ${source}`);
   }
   fs.renameSync(source, destination);
+};
+
+const deleteDirIfExists = (targetPath: string, label: string, warnings: string[]) => {
+  if (!fs.existsSync(targetPath)) {
+    warnings.push(`${label} not found at ${targetPath}.`);
+    return;
+  }
+  const stat = fs.statSync(targetPath);
+  if (!stat.isDirectory()) {
+    throw new Error(`${label} path is not a directory: ${targetPath}`);
+  }
+  fs.rmSync(targetPath, { recursive: true, force: false });
+};
+
+const deleteAgentArtifacts = (agentId: string, warnings: string[]) => {
+  const workspaceDir = path.join(os.homedir(), `clawd-${agentId}`);
+  deleteDirIfExists(workspaceDir, "Agent workspace", warnings);
+
+  const stateDirRaw = process.env.CLAWDBOT_STATE_DIR ?? "~/.clawdbot";
+  const stateDir = resolveHomePath(stateDirRaw);
+  const agentDir = path.join(stateDir, "agents", agentId);
+  deleteDirIfExists(agentDir, "Agent state", warnings);
 };

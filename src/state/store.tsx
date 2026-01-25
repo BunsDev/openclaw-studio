@@ -12,12 +12,14 @@ import {
 } from "react";
 
 import type { Project, ProjectTile, ProjectsStore } from "../lib/projects/types";
+import { CANVAS_BASE_ZOOM } from "../lib/canvasDefaults";
 import {
   createProjectTile as apiCreateProjectTile,
   createProject as apiCreateProject,
   deleteProjectTile as apiDeleteProjectTile,
   deleteProject as apiDeleteProject,
   fetchProjectsStore,
+  openProject as apiOpenProject,
   renameProjectTile as apiRenameProjectTile,
   saveProjectsStore,
 } from "../lib/projects/client";
@@ -76,7 +78,7 @@ const initialState: CanvasState = {
   projects: [],
   activeProjectId: null,
   selectedTileId: null,
-  canvas: { zoom: 1, offsetX: 0, offsetY: 0 },
+  canvas: { zoom: CANVAS_BASE_ZOOM, offsetX: 0, offsetY: 0 },
   loading: true,
   error: null,
 };
@@ -86,7 +88,7 @@ const buildSessionKey = (agentId: string) => `agent:${agentId}:main`;
 const createRuntimeTile = (tile: ProjectTile): AgentTile => ({
   ...tile,
   sessionKey: tile.sessionKey || buildSessionKey(tile.agentId),
-  model: tile.model ?? "zai/glm-4.7",
+  model: tile.model ?? null,
   thinkingLevel: tile.thinkingLevel ?? "low",
   status: "idle",
   outputLines: [],
@@ -253,6 +255,7 @@ type StoreContextValue = {
   ) => Promise<{ tile: ProjectTile; warnings: string[] } | null>;
   refreshStore: () => Promise<void>;
   createProject: (name: string) => Promise<{ warnings: string[] } | null>;
+  openProject: (path: string) => Promise<{ warnings: string[] } | null>;
   deleteProject: (projectId: string) => Promise<{ warnings: string[] } | null>;
   deleteTile: (
     projectId: string,
@@ -329,6 +332,18 @@ export const AgentCanvasProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
+  const openProject = useCallback(async (path: string) => {
+    try {
+      const result = await apiOpenProject({ path });
+      dispatch({ type: "loadStore", store: result.store });
+      return { warnings: result.warnings };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to open project.";
+      dispatch({ type: "setError", error: message });
+      return null;
+    }
+  }, []);
+
   const deleteProject = useCallback(async (projectId: string) => {
     try {
       const result = await apiDeleteProject(projectId);
@@ -375,11 +390,21 @@ export const AgentCanvasProvider = ({ children }: { children: ReactNode }) => {
       createTile,
       refreshStore,
       createProject,
+      openProject,
       deleteProject,
       deleteTile,
       renameTile,
     };
-  }, [state, createTile, refreshStore, createProject, deleteProject, deleteTile, renameTile]);
+  }, [
+    state,
+    createTile,
+    refreshStore,
+    createProject,
+    openProject,
+    deleteProject,
+    deleteTile,
+    renameTile,
+  ]);
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 };

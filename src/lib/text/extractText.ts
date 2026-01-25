@@ -64,6 +64,9 @@ const stripThinkingTags = (value: string): string => {
 };
 
 export const extractText = (message: unknown): string | null => {
+  if (!message || typeof message !== "object") {
+    return null;
+  }
   const m = message as Record<string, unknown>;
   const role = typeof m.role === "string" ? m.role : "";
   const content = m.content;

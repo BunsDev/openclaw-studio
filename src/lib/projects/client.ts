@@ -4,6 +4,8 @@ import type {
   ProjectDeleteResult,
   ProjectDiscordChannelCreatePayload,
   ProjectDiscordChannelCreateResult,
+  ProjectOpenPayload,
+  ProjectOpenResult,
   ProjectTileCreatePayload,
   ProjectTileCreateResult,
   ProjectTileDeleteResult,
@@ -33,6 +35,21 @@ export const createProject = async (
     throw new Error(data?.error ?? "Failed to create project.");
   }
   return data as ProjectCreateResult;
+};
+
+export const openProject = async (
+  payload: ProjectOpenPayload
+): Promise<ProjectOpenResult> => {
+  const res = await fetch("/api/projects/open", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data?.error ?? "Failed to open project.");
+  }
+  return data as ProjectOpenResult;
 };
 
 export const saveProjectsStore = async (store: ProjectsStore): Promise<ProjectsStore> => {

@@ -6,6 +6,7 @@ type HeaderBarProps = {
   status: GatewayStatus;
   onProjectChange: (projectId: string) => void;
   onCreateProject: () => void;
+  onOpenProject: () => void;
   onDeleteProject: () => void;
   onNewAgent: () => void;
   onCreateDiscordChannel: () => void;
@@ -29,6 +30,7 @@ export const HeaderBar = ({
   status,
   onProjectChange,
   onCreateProject,
+  onOpenProject,
   onDeleteProject,
   onNewAgent,
   onCreateDiscordChannel,
@@ -78,6 +80,13 @@ export const HeaderBar = ({
           onClick={onCreateProject}
         >
           New Project
+        </button>
+        <button
+          className="rounded-full border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700"
+          type="button"
+          onClick={onOpenProject}
+        >
+          Open Project
         </button>
         <button
           className="rounded-full border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700"

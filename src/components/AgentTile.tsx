@@ -140,11 +140,11 @@ export const AgentTile = ({
       onPointerDown={onSelect}
     >
       <div
-        className="flex cursor-grab items-center justify-between gap-4 border-b border-slate-200 px-8 py-4"
+        className="flex cursor-grab items-center justify-between gap-2 border-b border-slate-200 px-4 py-2"
         onPointerDown={handleDragStart}
       >
         <input
-          className="w-full bg-transparent text-xl font-semibold text-slate-900 outline-none"
+          className="w-full bg-transparent text-sm font-semibold text-slate-900 outline-none"
           value={nameDraft}
           onChange={(event) => setNameDraft(event.target.value)}
           onBlur={() => {
@@ -161,27 +161,27 @@ export const AgentTile = ({
           }}
         />
         <span
-          className={`rounded-full px-4 py-2 text-xl font-semibold uppercase tracking-wide ${statusColor}`}
+          className={`rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-wide ${statusColor}`}
         >
           {tile.status}
         </span>
         <button
-          className="rounded-full border border-slate-300 px-4 py-2 text-xl font-semibold text-slate-600"
+          className="rounded-full border border-slate-300 px-2 py-1 text-[10px] font-semibold text-slate-600"
           type="button"
           onClick={onDelete}
         >
           Delete
         </button>
       </div>
-      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden px-8 py-6">
+      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden px-4 py-3">
         <div
           ref={outputRef}
-          className="flex-1 overflow-auto rounded-2xl border border-slate-200 bg-white/60 p-6 text-lg text-slate-700"
+          className="flex-1 overflow-auto rounded-2xl border border-slate-200 bg-white/60 p-3 text-xs text-slate-700"
         >
           {tile.outputLines.length === 0 && !tile.streamText ? (
             <p className="text-slate-500">No output yet.</p>
           ) : (
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-2">
               {tile.outputLines.map((line, index) => (
                 <div key={`${tile.id}-line-${index}`} className="agent-markdown">
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>{line}</ReactMarkdown>
@@ -197,11 +197,11 @@ export const AgentTile = ({
             </div>
           )}
         </div>
-        <div className="flex flex-wrap items-center gap-4 text-xl uppercase tracking-wide text-slate-500">
-          <label className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-2 text-[11px] uppercase tracking-wide text-slate-500">
+          <label className="flex items-center gap-2">
             Model
             <select
-              className="h-14 rounded-full border border-slate-200 bg-white/80 px-4 text-xl font-semibold text-slate-700"
+              className="h-7 rounded-full border border-slate-200 bg-white/80 px-2 text-[11px] font-semibold text-slate-700"
               value={tile.model ?? ""}
               onChange={(event) => {
                 const value = event.target.value.trim();
@@ -217,10 +217,10 @@ export const AgentTile = ({
               <option value="zai/glm-4.7">glm-4.7</option>
             </select>
           </label>
-          <label className="flex items-center gap-4">
+          <label className="flex items-center gap-2">
             Thinking
             <select
-              className="h-14 rounded-full border border-slate-200 bg-white/80 px-4 text-xl font-semibold text-slate-700"
+              className="h-7 rounded-full border border-slate-200 bg-white/80 px-2 text-[11px] font-semibold text-slate-700"
               value={tile.thinkingLevel ?? ""}
               onChange={(event) => {
                 const value = event.target.value.trim();
@@ -237,9 +237,9 @@ export const AgentTile = ({
             </select>
           </label>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
           <input
-            className="h-18 flex-1 rounded-full border border-slate-200 bg-white/80 px-6 text-lg text-slate-900 outline-none"
+            className="h-9 flex-1 rounded-full border border-slate-200 bg-white/80 px-3 text-xs text-slate-900 outline-none"
             value={tile.draft}
             onChange={(event) => onDraftChange(event.target.value)}
             onKeyDown={(event) => {
@@ -255,7 +255,7 @@ export const AgentTile = ({
             disabled={!canSend || tile.status === "running"}
           />
           <button
-            className="rounded-full bg-slate-900 px-6 py-4 text-lg font-semibold text-white disabled:cursor-not-allowed disabled:bg-slate-400"
+            className="rounded-full bg-slate-900 px-3 py-2 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:bg-slate-400"
             type="button"
             onClick={() => onSend(tile.draft)}
             disabled={!canSend || tile.status === "running" || !tile.draft.trim()}
@@ -265,19 +265,19 @@ export const AgentTile = ({
         </div>
       </div>
       <div
-        className="absolute bottom-0 right-0 h-8 w-8 cursor-se-resize"
+        className="absolute bottom-0 right-0 h-4 w-4 cursor-se-resize"
         onPointerDown={handleResizeStart}
       />
       <div
-        className="absolute bottom-0 left-0 h-8 w-8 cursor-sw-resize"
+        className="absolute bottom-0 left-0 h-4 w-4 cursor-sw-resize"
         onPointerDown={handleResizeStart}
       />
       <div
-        className="absolute top-0 right-0 h-8 w-8 cursor-ne-resize"
+        className="absolute top-0 right-0 h-4 w-4 cursor-ne-resize"
         onPointerDown={handleResizeStart}
       />
       <div
-        className="absolute top-0 left-0 h-8 w-8 cursor-nw-resize"
+        className="absolute top-0 left-0 h-4 w-4 cursor-nw-resize"
         onPointerDown={handleResizeStart}
       />
     </div>
