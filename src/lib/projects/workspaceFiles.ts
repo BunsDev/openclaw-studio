@@ -10,6 +10,9 @@ export const WORKSPACE_FILE_NAMES = [
 
 export type WorkspaceFileName = (typeof WORKSPACE_FILE_NAMES)[number];
 
+export const isWorkspaceFileName = (value: string): value is WorkspaceFileName =>
+  WORKSPACE_FILE_NAMES.includes(value as WorkspaceFileName);
+
 export const WORKSPACE_FILE_META: Record<WorkspaceFileName, { title: string; hint: string }> = {
   "AGENTS.md": {
     title: "AGENTS.md",
@@ -50,3 +53,8 @@ export const WORKSPACE_FILE_PLACEHOLDERS: Record<WorkspaceFileName, string> = {
   "HEARTBEAT.md": "A tiny checklist for periodic runs.",
   "MEMORY.md": "Durable facts, decisions, and preferences to remember.",
 };
+
+export const createWorkspaceFilesState = () =>
+  Object.fromEntries(
+    WORKSPACE_FILE_NAMES.map((name) => [name, { content: "", exists: false }])
+  ) as Record<WorkspaceFileName, { content: string; exists: boolean }>;

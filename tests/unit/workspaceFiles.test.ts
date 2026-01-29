@@ -4,7 +4,11 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
-import { WORKSPACE_FILE_NAMES } from "@/lib/projects/workspaceFiles";
+import {
+  WORKSPACE_FILE_NAMES,
+  createWorkspaceFilesState,
+  isWorkspaceFileName,
+} from "@/lib/projects/workspaceFiles";
 import { provisionWorkspaceFiles, readWorkspaceFile } from "@/lib/projects/workspaceFiles.server";
 
 const createTempDir = () =>
@@ -21,6 +25,19 @@ const cleanup = () => {
 afterEach(cleanup);
 
 describe("workspaceFiles", () => {
+  it("validatesWorkspaceFileNames", () => {
+    expect(isWorkspaceFileName("AGENTS.md")).toBe(true);
+    expect(isWorkspaceFileName("NOTES.md")).toBe(false);
+  });
+
+  it("createsWorkspaceFilesState", () => {
+    const state = createWorkspaceFilesState();
+    expect(Object.keys(state)).toEqual([...WORKSPACE_FILE_NAMES]);
+    for (const name of WORKSPACE_FILE_NAMES) {
+      expect(state[name]).toEqual({ content: "", exists: false });
+    }
+  });
+
   it("provisionWorkspaceFiles creates all named files", () => {
     tempDir = createTempDir();
     provisionWorkspaceFiles(tempDir);
