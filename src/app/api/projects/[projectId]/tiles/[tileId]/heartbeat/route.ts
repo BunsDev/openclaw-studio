@@ -1,7 +1,13 @@
 import { NextResponse } from "next/server";
 
 import { logger } from "@/lib/logger";
-import { loadClawdbotConfig, saveClawdbotConfig } from "@/lib/clawdbot/config";
+import {
+  loadClawdbotConfig,
+  readAgentList,
+  saveClawdbotConfig,
+  type AgentEntry,
+  writeAgentList,
+} from "@/lib/clawdbot/config";
 import { resolveProjectTile } from "@/lib/projects/resolve";
 import type {
   ProjectTileHeartbeat,
@@ -13,7 +19,6 @@ export const runtime = "nodejs";
 
 type HeartbeatBlock = Record<string, unknown> | null | undefined;
 
-type AgentEntry = Record<string, unknown> & { id?: string };
 
 type HeartbeatResolved = {
   heartbeat: ProjectTileHeartbeat;
@@ -71,18 +76,6 @@ const normalizeHeartbeat = (defaults: HeartbeatBlock, override: HeartbeatBlock) 
     },
     hasOverride: Boolean(override && typeof override === "object"),
   } satisfies HeartbeatResolved;
-};
-
-const readAgentList = (config: Record<string, unknown>): AgentEntry[] => {
-  const agents = (config.agents ?? {}) as Record<string, unknown>;
-  const list = Array.isArray(agents.list) ? agents.list : [];
-  return list.filter((entry): entry is AgentEntry => Boolean(entry && typeof entry === "object"));
-};
-
-const writeAgentList = (config: Record<string, unknown>, list: AgentEntry[]) => {
-  const agents = (config.agents ?? {}) as Record<string, unknown>;
-  agents.list = list;
-  config.agents = agents;
 };
 
 const readHeartbeatDefaults = (config: Record<string, unknown>): HeartbeatBlock => {
