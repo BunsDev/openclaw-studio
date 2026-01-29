@@ -21,7 +21,6 @@ import {
   deleteProject as apiDeleteProject,
   fetchProjectsStore,
   openProject as apiOpenProject,
-  renameProjectTile as apiRenameProjectTile,
   updateProjectTile as apiUpdateProjectTile,
   saveProjectsStore,
 } from "@/lib/projects/client";
@@ -406,7 +405,7 @@ export const AgentCanvasProvider = ({ children }: { children: ReactNode }) => {
         dispatch({ type: "updateTile", projectId, tileId, patch: { name } });
       }
       try {
-        const result = await apiRenameProjectTile(projectId, tileId, { name });
+        const result = await apiUpdateProjectTile(projectId, tileId, { name });
         return { warnings: result.warnings };
       } catch (err) {
         const message = err instanceof Error ? err.message : "Failed to rename tile.";
