@@ -10,7 +10,6 @@ import type {
   ProjectTileCreatePayload,
   ProjectTileCreateResult,
   ProjectTileRole,
-  ProjectsStore,
 } from "@/lib/projects/types";
 import { resolveAgentWorkspaceDir } from "@/lib/projects/agentWorkspace";
 import { resolveStateDir } from "@/lib/clawdbot/paths";
@@ -22,7 +21,7 @@ import {
 } from "@/lib/clawdbot/config";
 import { generateAgentId } from "@/lib/ids/agentId";
 import { provisionWorkspaceFiles } from "@/lib/projects/workspaceFiles.server";
-import { loadStore, saveStore } from "../../store";
+import { addTileToProject, loadStore, saveStore } from "../../store";
 
 export const runtime = "nodejs";
 
@@ -45,26 +44,6 @@ const copyAuthProfiles = (agentId: string): string[] => {
   fs.mkdirSync(path.dirname(destination), { recursive: true });
   fs.copyFileSync(source, destination);
   return warnings;
-};
-
-const updateStoreProject = (
-  store: ProjectsStore,
-  projectId: string,
-  tile: ProjectTile
-) => {
-  return {
-    ...store,
-    version: 2 as const,
-    projects: store.projects.map((project) =>
-      project.id === projectId
-        ? {
-            ...project,
-            tiles: [...project.tiles, tile],
-            updatedAt: Date.now(),
-          }
-        : project
-    ),
-  };
 };
 
 export async function POST(
@@ -125,7 +104,7 @@ export async function POST(
       size: { width: 420, height: 520 },
     };
 
-    const nextStore = updateStoreProject(store, resolvedProjectId, tile);
+    const nextStore = addTileToProject(store, resolvedProjectId, tile);
     saveStore(nextStore);
 
     const { warnings: workspaceWarnings } = provisionWorkspaceFiles(workspaceDir);

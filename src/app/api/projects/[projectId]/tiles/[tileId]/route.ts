@@ -11,7 +11,7 @@ import {
   saveClawdbotConfig,
   upsertAgentEntry,
 } from "@/lib/clawdbot/config";
-import { loadStore, saveStore } from "../../../store";
+import { loadStore, removeTileFromProject, saveStore, updateTileInProject } from "../../../store";
 
 export const runtime = "nodejs";
 
@@ -29,8 +29,7 @@ export async function DELETE(
         { status: resolved.error.status }
       );
     }
-    const { projectId: resolvedProjectId, tileId: resolvedTileId, project, tile } =
-      resolved;
+    const { projectId: resolvedProjectId, tileId: resolvedTileId, tile } = resolved;
 
     const warnings: string[] = [];
     if (!tile.agentId?.trim()) {
@@ -50,19 +49,14 @@ export async function DELETE(
       }
     }
 
-    const nextTiles = project.tiles.filter((entry) => entry.id !== resolvedTileId);
-    if (nextTiles.length === project.tiles.length) {
+    const { store: nextStore, removed } = removeTileFromProject(
+      store,
+      resolvedProjectId,
+      resolvedTileId
+    );
+    if (!removed) {
       return NextResponse.json({ error: "Tile not found." }, { status: 404 });
     }
-    const nextStore = {
-      ...store,
-      version: 2 as const,
-      projects: store.projects.map((entry) =>
-        entry.id === resolvedProjectId
-          ? { ...entry, tiles: nextTiles, updatedAt: Date.now() }
-          : entry
-      ),
-    };
     saveStore(nextStore);
     return NextResponse.json({ store: nextStore, warnings });
   } catch (err) {
@@ -100,8 +94,7 @@ export async function PATCH(
         { status: resolved.error.status }
       );
     }
-    const { projectId: resolvedProjectId, tileId: resolvedTileId, project, tile } =
-      resolved;
+    const { projectId: resolvedProjectId, tileId: resolvedTileId, tile } = resolved;
 
     const warnings: string[] = [];
     if (name) {
@@ -126,24 +119,16 @@ export async function PATCH(
       }
     }
 
-    const nextTiles = project.tiles.map((entry) =>
-      entry.id === resolvedTileId
-        ? {
-            ...entry,
-            name: name || entry.name,
-            avatarSeed: avatarSeed || entry.avatarSeed,
-          }
-        : entry
-    );
-    const nextStore = {
-      ...store,
-      version: 2 as const,
-      projects: store.projects.map((entry) =>
-        entry.id === resolvedProjectId
-          ? { ...entry, tiles: nextTiles, updatedAt: Date.now() }
-          : entry
-      ),
+    const patch = {
+      ...(name ? { name } : {}),
+      ...(avatarSeed ? { avatarSeed } : {}),
     };
+    const nextStore = updateTileInProject(
+      store,
+      resolvedProjectId,
+      resolvedTileId,
+      patch
+    );
     saveStore(nextStore);
     return NextResponse.json({ store: nextStore, warnings });
   } catch (err) {

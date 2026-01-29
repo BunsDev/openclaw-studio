@@ -10,9 +10,8 @@ import type {
   Project,
   ProjectOpenPayload,
   ProjectOpenResult,
-  ProjectsStore,
 } from "@/lib/projects/types";
-import { loadStore, normalizeProjectsStore, saveStore } from "../store";
+import { appendProjectToStore, loadStore, saveStore } from "../store";
 
 export const runtime = "nodejs";
 
@@ -77,11 +76,7 @@ export async function POST(request: Request) {
       tiles: [],
     };
 
-    const nextStore = normalizeProjectsStore({
-      version: 2,
-      activeProjectId: project.id,
-      projects: [...store.projects, project],
-    });
+    const nextStore = appendProjectToStore(store, project);
 
     saveStore(nextStore);
 
