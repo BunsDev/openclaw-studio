@@ -323,9 +323,25 @@ export const AgentTile = ({
         : "bg-amber-200 text-amber-900";
   const statusLabel =
     tile.status === "running" ? "Running" : tile.status === "error" ? "Error" : "Idle";
-  const latestPreview = (() => {
-    const streamText = tile.streamText?.trim();
-    if (tile.status === "running" && streamText) return streamText;
+  const latestTraceLine = (() => {
+    for (let index = tile.outputLines.length - 1; index >= 0; index -= 1) {
+      const line = tile.outputLines[index];
+      if (!line) continue;
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+      if (!isTraceMarkdown(trimmed)) continue;
+      return stripTraceMarkdown(trimmed);
+    }
+    return null;
+  })();
+  const latestUpdate = (() => {
+    if (tile.status === "running") {
+      const thinking = tile.thinkingTrace?.trim();
+      if (thinking) return thinking;
+      if (latestTraceLine) return latestTraceLine;
+      const streamText = tile.streamText?.trim();
+      if (streamText) return streamText;
+    }
     const lastResult = tile.lastResult?.trim();
     if (lastResult) return lastResult;
     for (let index = tile.outputLines.length - 1; index >= 0; index -= 1) {
@@ -338,6 +354,18 @@ export const AgentTile = ({
       return trimmed;
     }
     return "No updates yet.";
+  })();
+  const lastUserMessage = (() => {
+    for (let index = tile.outputLines.length - 1; index >= 0; index -= 1) {
+      const line = tile.outputLines[index];
+      if (!line) continue;
+      const trimmed = line.trim();
+      if (!trimmed.startsWith(">")) continue;
+      const message = trimmed.replace(/^>\s?/, "").trim();
+      if (!message) continue;
+      return message;
+    }
+    return null;
   })();
   const modelOptions = models.map((entry) => ({
     value: `${entry.provider}/${entry.id}`,
@@ -1052,19 +1080,24 @@ export const AgentTile = ({
         </div>
         <div className="rounded-2xl border border-slate-200 bg-white/80 px-3 py-2">
           <div className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-wide text-slate-500">
-            <span>Status</span>
+            <span>Latest update</span>
             <span
               className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${statusColor}`}
             >
               {statusLabel}
             </span>
           </div>
-          <div className="mt-2 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
-            Latest update
+          <div className="mt-2 max-h-28 overflow-auto text-xs text-slate-700">
+            {latestUpdate}
           </div>
-          <div className="agent-summary-clamp text-xs text-slate-700">
-            {latestPreview}
-          </div>
+          {lastUserMessage ? (
+            <div className="mt-2 border-t border-slate-200 pt-2 text-[11px] text-slate-500">
+              <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                Last message
+              </span>
+              <div className="mt-1 text-xs text-slate-700">{lastUserMessage}</div>
+            </div>
+          ) : null}
         </div>
         <div className="mt-2 flex items-end gap-2">
           <div className="relative">
