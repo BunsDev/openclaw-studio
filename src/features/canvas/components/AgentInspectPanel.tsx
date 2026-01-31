@@ -313,32 +313,58 @@ export const AgentInspectPanel = ({
   );
   const allowThinking = selectedModel?.reasoning !== false;
 
-  const activityLines = useMemo(
-    () => tile.outputLines.filter((line) => !isTraceMarkdown(line)),
-    [tile.outputLines]
-  );
-
-  const traceSegments = useMemo(() => {
-    const segments: string[] = [];
-    let buffer: string[] = [];
+  const activityBlocks = useMemo(() => {
+    type ActivityBlock = { user?: string; traces: string[]; assistant: string[] };
+    const blocks: ActivityBlock[] = [];
+    let current: ActivityBlock | null = null;
+    let traceBuffer: string[] = [];
+    const ensureBlock = () => {
+      if (!current) {
+        current = { traces: [], assistant: [] };
+        blocks.push(current);
+      }
+      return current;
+    };
+    const flushTrace = () => {
+      if (current && traceBuffer.length > 0) {
+        current.traces.push(traceBuffer.join("\n"));
+        traceBuffer = [];
+      }
+    };
     for (const line of tile.outputLines) {
       if (isTraceMarkdown(line)) {
-        buffer.push(stripTraceMarkdown(line));
+        ensureBlock();
+        traceBuffer.push(stripTraceMarkdown(line));
         continue;
       }
-      if (buffer.length > 0) {
-        segments.push(buffer.join("\n"));
-        buffer = [];
+      flushTrace();
+      const trimmed = line.trim();
+      if (trimmed.startsWith(">")) {
+        const user = trimmed.replace(/^>\s?/, "").trim();
+        current = { user: user || undefined, traces: [], assistant: [] };
+        blocks.push(current);
+        continue;
+      }
+      const block = ensureBlock();
+      if (line) {
+        block.assistant.push(line);
       }
     }
-    if (buffer.length > 0) {
-      segments.push(buffer.join("\n"));
+    flushTrace();
+    const liveThinking = tile.thinkingTrace?.trim();
+    if (liveThinking) {
+      const block = ensureBlock();
+      block.traces.push(liveThinking);
     }
-    return segments;
-  }, [tile.outputLines]);
+    const liveStream = tile.streamText?.trim();
+    if (liveStream) {
+      const block = ensureBlock();
+      block.assistant.push(liveStream);
+    }
+    return blocks;
+  }, [tile.outputLines, tile.streamText, tile.thinkingTrace]);
 
-  const hasActivity = tile.outputLines.length > 0 || Boolean(tile.streamText);
-  const hasThinking = Boolean(tile.thinkingTrace?.trim()) || traceSegments.length > 0;
+  const hasActivity = activityBlocks.length > 0;
 
   return (
     <div className="agent-inspect-panel" data-testid="agent-inspect-panel">
@@ -361,7 +387,7 @@ export const AgentInspectPanel = ({
 
       <div className="flex flex-col gap-4 p-4">
         <section
-          className="rounded-lg border border-border bg-card p-4"
+          className="rounded-lg bg-card p-4 shadow-sm"
           data-testid="agent-inspect-activity"
         >
           <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -373,22 +399,57 @@ export const AgentInspectPanel = ({
           {hasActivity ? (
             <div
               ref={outputRef}
-              className="mt-3 max-h-[320px] overflow-auto rounded-lg border border-border bg-muted p-3 text-xs text-foreground"
+              className="mt-3 max-h-[420px] overflow-auto p-2 text-xs text-foreground"
               onWheel={handleOutputWheel}
             >
-              <div className="flex flex-col gap-2">
-                {activityLines.map((line, index) => (
-                  <div key={`${tile.id}-line-${index}`} className="agent-markdown">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{line}</ReactMarkdown>
+              <div className="flex flex-col gap-4">
+                {activityBlocks.map((block, index) => (
+                  <div
+                    key={`${tile.id}-activity-${index}`}
+                    className="pb-4 last:pb-0"
+                  >
+                    {block.user ? (
+                      <div className="agent-markdown text-foreground">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {`> ${block.user}`}
+                        </ReactMarkdown>
+                      </div>
+                    ) : null}
+                    {block.traces.length > 0 ? (
+                      <div className="mt-2 flex flex-col gap-2">
+                        {block.traces.map((trace, traceIndex) => (
+                          <details
+                            key={`${tile.id}-trace-${index}-${traceIndex}`}
+                            className="rounded-md bg-muted/60 px-2 py-1 text-[11px] text-muted-foreground"
+                          >
+                            <summary className="cursor-pointer select-none font-semibold">
+                              Thinking trace
+                            </summary>
+                            <div className="agent-markdown mt-1 text-foreground">
+                              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                {trace}
+                              </ReactMarkdown>
+                            </div>
+                          </details>
+                        ))}
+                      </div>
+                    ) : null}
+                    {block.assistant.length > 0 ? (
+                      <div className="mt-2 flex flex-col gap-2 text-foreground">
+                        {block.assistant.map((line, lineIndex) => (
+                          <div
+                            key={`${tile.id}-assistant-${index}-${lineIndex}`}
+                            className="agent-markdown"
+                          >
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                              {line}
+                            </ReactMarkdown>
+                          </div>
+                        ))}
+                      </div>
+                    ) : null}
                   </div>
                 ))}
-                {tile.streamText ? (
-                  <div className="agent-markdown text-muted-foreground">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {tile.streamText}
-                    </ReactMarkdown>
-                  </div>
-                ) : null}
               </div>
             </div>
           ) : (
@@ -406,51 +467,6 @@ export const AgentInspectPanel = ({
               </button>
             </div>
           )}
-        </section>
-
-        <section
-          className="rounded-lg border border-border bg-card p-4"
-          data-testid="agent-inspect-thinking"
-        >
-          <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            <span>Thinking</span>
-            <span className="text-[11px] font-semibold uppercase text-muted-foreground">
-              {hasThinking ? "Trace" : "None"}
-            </span>
-          </div>
-          {tile.thinkingTrace ? (
-            <div className="mt-3 rounded-lg border border-border bg-accent px-2 py-1 text-[11px] font-medium text-accent-foreground">
-              <div className="agent-markdown">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                  {tile.thinkingTrace}
-                </ReactMarkdown>
-              </div>
-            </div>
-          ) : null}
-          {traceSegments.length > 0 ? (
-            <div className="mt-3 flex flex-col gap-2">
-              {traceSegments.map((segment, index) => (
-                <details
-                  key={`${tile.id}-trace-${index}`}
-                  className="rounded-lg border border-border bg-card px-2 py-1 text-[11px] text-muted-foreground"
-                >
-                  <summary className="cursor-pointer select-none font-semibold">
-                    Trace segment
-                  </summary>
-                  <div className="agent-markdown mt-1 text-foreground">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {segment}
-                    </ReactMarkdown>
-                  </div>
-                </details>
-              ))}
-            </div>
-          ) : null}
-          {!hasThinking ? (
-            <div className="mt-3 text-xs text-muted-foreground">
-              No thinking captured yet.
-            </div>
-          ) : null}
         </section>
 
         <section
