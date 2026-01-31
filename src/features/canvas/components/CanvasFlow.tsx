@@ -18,29 +18,23 @@ import type {
   TilePosition,
   TileSize,
 } from "@/features/canvas/state/store";
-import type { GatewayModelChoice } from "@/lib/gateway/models";
 import { AgentTileNode, type AgentTileNodeData } from "./AgentTileNode";
 
 type CanvasFlowProps = {
   tiles: AgentTile[];
-  projectId: string | null;
   transform: CanvasTransform;
   viewportRef?: React.MutableRefObject<HTMLDivElement | null>;
   selectedTileId: string | null;
   canSend: boolean;
-  models: GatewayModelChoice[];
   onSelectTile: (id: string | null) => void;
   onMoveTile: (id: string, position: TilePosition) => void;
   onResizeTile: (id: string, size: TileSize) => void;
-  onDeleteTile: (id: string) => void;
-  onLoadHistory: (id: string) => void;
   onRenameTile: (id: string, name: string) => Promise<boolean>;
   onDraftChange: (id: string, value: string) => void;
   onSend: (id: string, sessionKey: string, message: string) => void;
-  onModelChange: (id: string, sessionKey: string, value: string | null) => void;
-  onThinkingChange: (id: string, sessionKey: string, value: string | null) => void;
   onAvatarShuffle: (id: string) => void;
   onNameShuffle: (id: string) => void;
+  onInspectTile: (id: string) => void;
   onUpdateTransform: (patch: Partial<CanvasTransform>) => void;
 };
 
@@ -48,68 +42,55 @@ type TileNode = Node<AgentTileNodeData>;
 
 const CanvasFlowInner = ({
   tiles,
-  projectId,
   transform,
   viewportRef,
   selectedTileId,
   canSend,
-  models,
   onSelectTile,
   onMoveTile,
   onResizeTile,
-  onDeleteTile,
-  onLoadHistory,
   onRenameTile,
   onDraftChange,
   onSend,
-  onModelChange,
-  onThinkingChange,
   onAvatarShuffle,
   onNameShuffle,
+  onInspectTile,
   onUpdateTransform,
 }: CanvasFlowProps) => {
   const nodeTypes = useMemo(() => ({ agentTile: AgentTileNode }), []);
   const resizeOverridesRef = useRef<Map<string, TileSize>>(new Map());
+  const ignoreNextSelectionClearRef = useRef(false);
   const handlersRef = useRef({
     onMoveTile,
     onResizeTile,
-    onDeleteTile,
-    onLoadHistory,
     onRenameTile,
     onDraftChange,
     onSend,
-    onModelChange,
-    onThinkingChange,
     onAvatarShuffle,
     onNameShuffle,
+    onInspectTile,
   });
 
   useEffect(() => {
     handlersRef.current = {
       onMoveTile,
       onResizeTile,
-      onDeleteTile,
-      onLoadHistory,
       onRenameTile,
       onDraftChange,
       onSend,
-      onModelChange,
-      onThinkingChange,
       onAvatarShuffle,
       onNameShuffle,
+      onInspectTile,
     };
   }, [
     onMoveTile,
     onResizeTile,
-    onDeleteTile,
-    onLoadHistory,
     onRenameTile,
     onDraftChange,
     onSend,
-    onModelChange,
-    onThinkingChange,
     onAvatarShuffle,
     onNameShuffle,
+    onInspectTile,
   ]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState<TileNode>([]);
@@ -145,26 +126,22 @@ const CanvasFlowInner = ({
         dragHandle: "[data-drag-handle]",
         data: {
           tile,
-          projectId,
           canSend,
-          models,
           onResize: (size) => updateNodeSize(tile.id, size),
           onResizeEnd: (size) => commitNodeSize(tile.id, size),
-          onDelete: () => handlersRef.current.onDeleteTile(tile.id),
-          onLoadHistory: () => handlersRef.current.onLoadHistory(tile.id),
           onNameChange: (name) => handlersRef.current.onRenameTile(tile.id, name),
           onDraftChange: (value) => handlersRef.current.onDraftChange(tile.id, value),
           onSend: (message) =>
             handlersRef.current.onSend(tile.id, tile.sessionKey, message),
-          onModelChange: (value) =>
-            handlersRef.current.onModelChange(tile.id, tile.sessionKey, value),
-          onThinkingChange: (value) =>
-            handlersRef.current.onThinkingChange(tile.id, tile.sessionKey, value),
           onAvatarShuffle: () => handlersRef.current.onAvatarShuffle(tile.id),
           onNameShuffle: () => handlersRef.current.onNameShuffle(tile.id),
+          onInspect: () => {
+            ignoreNextSelectionClearRef.current = true;
+            handlersRef.current.onInspectTile(tile.id);
+          },
         },
       })),
-    [canSend, commitNodeSize, models, projectId, tiles, updateNodeSize]
+    [canSend, commitNodeSize, tiles, updateNodeSize]
   );
 
   useEffect(() => {
@@ -212,7 +189,12 @@ const CanvasFlowInner = ({
   const handleSelectionChange = useCallback(
     ({ nodes: selectedNodes }: { nodes: TileNode[] }) => {
       const nextSelection = selectedNodes[0]?.id ?? null;
+      if (nextSelection === null && ignoreNextSelectionClearRef.current) {
+        ignoreNextSelectionClearRef.current = false;
+        return;
+      }
       if (nextSelection === selectedTileId) return;
+      ignoreNextSelectionClearRef.current = false;
       onSelectTile(nextSelection);
     },
     [onSelectTile, selectedTileId]
@@ -239,7 +221,9 @@ const CanvasFlowInner = ({
       onNodeDragStop={handleNodeDragStop}
       onNodeClick={handleNodeClick}
       onSelectionChange={handleSelectionChange}
-      onPaneClick={() => {
+      onPaneClick={(event) => {
+        const target = event.target as HTMLElement | null;
+        if (target?.closest?.("[data-tile]")) return;
         if (selectedTileId !== null) {
           onSelectTile(null);
         }

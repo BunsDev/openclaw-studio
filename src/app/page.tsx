@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 // (ReactFlowInstance import removed)
 import { CanvasFlow } from "@/features/canvas/components/CanvasFlow";
+import { AgentInspectPanel } from "@/features/canvas/components/AgentInspectPanel";
 import { HeaderBar } from "@/features/canvas/components/HeaderBar";
 import { MAX_TILE_HEIGHT, MIN_TILE_SIZE } from "@/lib/canvasTileDefaults";
 import { screenToWorld, worldToScreen } from "@/features/canvas/lib/transform";
@@ -141,10 +142,8 @@ const mergeHistoryWithPending = (historyLines: string[], currentLines: string[])
       cursor = foundIndex + 1;
       continue;
     }
-    if (line.startsWith("> ")) {
-      merged.splice(cursor, 0, line);
-      cursor += 1;
-    }
+    merged.splice(cursor, 0, line);
+    cursor += 1;
   }
   return merged;
 };
@@ -205,6 +204,7 @@ const AgentCanvasPage = () => {
   const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
   const [gatewayModels, setGatewayModels] = useState<GatewayModelChoice[]>([]);
   const [gatewayModelsError, setGatewayModelsError] = useState<string | null>(null);
+  const [inspectTileId, setInspectTileId] = useState<string | null>(null);
   // flowInstance removed (zoom controls live in the bottom-right ReactFlow Controls).
 
   const visibleProjects = useMemo(
@@ -226,6 +226,10 @@ const AgentCanvasPage = () => {
     () => filterArchivedItems(project?.tiles ?? [], showArchived),
     [project?.tiles, showArchived]
   );
+  const inspectTile = useMemo(() => {
+    if (!inspectTileId || !project) return null;
+    return project.tiles.find((entry) => entry.id === inspectTileId) ?? null;
+  }, [inspectTileId, project]);
   const errorMessage = state.error ?? gatewayModelsError;
 
   const resolveConfiguredModelKey = useCallback(
@@ -383,6 +387,19 @@ const AgentCanvasPage = () => {
   useEffect(() => {
     stateRef.current = state;
   }, [state]);
+
+  useEffect(() => {
+    if (!inspectTileId) return;
+    if (state.selectedTileId && state.selectedTileId !== inspectTileId) {
+      setInspectTileId(null);
+    }
+  }, [inspectTileId, state.selectedTileId]);
+
+  useEffect(() => {
+    if (inspectTileId && !inspectTile) {
+      setInspectTileId(null);
+    }
+  }, [inspectTileId, inspectTile]);
 
   useEffect(() => {
     if (status !== "connected") {
@@ -597,6 +614,7 @@ const AgentCanvasPage = () => {
       if (historyInFlightRef.current.has(sessionKey)) return;
 
       historyInFlightRef.current.add(sessionKey);
+      const loadedAt = Date.now();
       try {
         const result = await client.call<ChatHistoryResult>("chat.history", {
           sessionKey,
@@ -605,21 +623,34 @@ const AgentCanvasPage = () => {
         const { lines, lastAssistant, lastRole, lastUser } = buildHistoryLines(
           result.messages ?? []
         );
-        if (lines.length === 0) return;
+        if (lines.length === 0) {
+          dispatch({
+            type: "updateTile",
+            projectId,
+            tileId,
+            patch: { historyLoadedAt: loadedAt },
+          });
+          return;
+        }
         const currentLines = tile.outputLines;
         const mergedLines = mergeHistoryWithPending(lines, currentLines);
         const isSame =
           mergedLines.length === currentLines.length &&
           mergedLines.every((line, index) => line === currentLines[index]);
         if (isSame) {
+          const patch: Partial<AgentTile> = { historyLoadedAt: loadedAt };
           if (!tile.runId && tile.status === "running" && lastRole === "assistant") {
-            dispatch({
-              type: "updateTile",
-              projectId,
-              tileId,
-              patch: { status: "idle", runId: null, streamText: null, thinkingTrace: null },
-            });
+            patch.status = "idle";
+            patch.runId = null;
+            patch.streamText = null;
+            patch.thinkingTrace = null;
           }
+          dispatch({
+            type: "updateTile",
+            projectId,
+            tileId,
+            patch,
+          });
           return;
         }
         const patch: Partial<AgentTile> = {
@@ -627,6 +658,7 @@ const AgentCanvasPage = () => {
           lastResult: lastAssistant ?? null,
           ...(lastAssistant ? { latestPreview: lastAssistant } : {}),
           ...(lastUser ? { lastUserMessage: lastUser } : {}),
+          historyLoadedAt: loadedAt,
         };
         if (!tile.runId && tile.status === "running" && lastRole === "assistant") {
           patch.status = "idle";
@@ -657,6 +689,28 @@ const AgentCanvasPage = () => {
     },
     [loadTileHistory, project]
   );
+
+  const handleInspectTile = useCallback(
+    (tileId: string) => {
+      setInspectTileId(tileId);
+      dispatch({ type: "selectTile", tileId });
+    },
+    [dispatch]
+  );
+
+  const shouldAutoLoadHistory = useCallback((tile: AgentTile) => {
+    if (!tile.sessionKey?.trim()) return false;
+    return !tile.historyLoadedAt;
+  }, []);
+
+  useEffect(() => {
+    if (status !== "connected") return;
+    if (!project) return;
+    for (const tile of tiles) {
+      if (!shouldAutoLoadHistory(tile)) continue;
+      void loadTileHistory(project.id, tile.id);
+    }
+  }, [loadTileHistory, project, shouldAutoLoadHistory, status, tiles]);
 
   const handleSend = useCallback(
     async (tileId: string, sessionKey: string, message: string) => {
@@ -1169,12 +1223,10 @@ const AgentCanvasPage = () => {
     <div className="relative h-screen w-screen overflow-hidden">
       <CanvasFlow
         tiles={tiles}
-        projectId={project?.id ?? null}
         transform={state.canvas}
         viewportRef={viewportRef}
         selectedTileId={state.selectedTileId}
         canSend={status === "connected"}
-        models={gatewayModels}
         onSelectTile={(id) => dispatch({ type: "selectTile", tileId: id })}
         onMoveTile={(id, position) =>
           project
@@ -1204,8 +1256,6 @@ const AgentCanvasPage = () => {
               })
             : null
         }
-        onDeleteTile={handleTileDelete}
-        onLoadHistory={handleLoadHistory}
         onRenameTile={(id, name) => {
           if (!project) return Promise.resolve(false);
           return renameTile(project.id, id, name).then((result) => {
@@ -1231,12 +1281,29 @@ const AgentCanvasPage = () => {
             : null
         }
         onSend={handleSend}
-        onModelChange={handleModelChange}
-        onThinkingChange={handleThinkingChange}
         onAvatarShuffle={handleAvatarShuffle}
         onNameShuffle={handleNameShuffle}
+        onInspectTile={handleInspectTile}
         onUpdateTransform={(patch) => dispatch({ type: "setCanvas", patch })}
       />
+
+      {inspectTile && project ? (
+        <AgentInspectPanel
+          key={inspectTile.id}
+          tile={inspectTile}
+          projectId={project.id}
+          models={gatewayModels}
+          onClose={() => setInspectTileId(null)}
+          onLoadHistory={() => handleLoadHistory(inspectTile.id)}
+          onModelChange={(value) =>
+            handleModelChange(inspectTile.id, inspectTile.sessionKey, value)
+          }
+          onThinkingChange={(value) =>
+            handleThinkingChange(inspectTile.id, inspectTile.sessionKey, value)
+          }
+          onDelete={() => handleTileDelete(inspectTile.id)}
+        />
+      ) : null}
 
       <div className="pointer-events-none absolute inset-0 z-10 flex flex-col gap-4 p-6">
         <div className="pointer-events-auto mx-auto w-full max-w-6xl">

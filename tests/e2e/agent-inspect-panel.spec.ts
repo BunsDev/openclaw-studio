@@ -22,7 +22,20 @@ const store = {
           archivedAt: null,
           model: null,
           thinkingLevel: "low",
-          position: { x: 400, y: 300 },
+          position: { x: 300, y: 260 },
+          size: { width: 420, height: 520 },
+        },
+        {
+          id: "tile-2",
+          name: "Agent B",
+          agentId: "agent-2",
+          role: "coding",
+          sessionKey: "agent:agent-2:main",
+          workspacePath: "/Users/demo",
+          archivedAt: null,
+          model: null,
+          thinkingLevel: "low",
+          position: { x: 900, y: 320 },
           size: { width: 420, height: 520 },
         },
       ],
@@ -44,16 +57,19 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
-test("new agent tile shows avatar and input with inspect panel", async ({ page }) => {
+test("inspect panel opens on demand and closes on selection", async ({ page }) => {
   await page.goto("/");
 
-  await expect(page.getByAltText("Avatar for Agent A")).toBeVisible();
-  await expect(page.getByPlaceholder(/type a message/i)).toBeVisible();
   await expect(page.getByTestId("agent-inspect-panel")).toHaveCount(0);
 
-  await page.getByTestId("agent-inspect-toggle").click();
+  await page.getByTestId("agent-inspect-toggle").first().click();
   await expect(page.getByTestId("agent-inspect-panel")).toBeVisible();
-  await expect(page.getByTestId("agent-inspect-settings")).toContainText("Model");
-  await expect(page.getByTestId("agent-inspect-settings")).toContainText("Thinking");
-  await expect(page.getByTestId("agent-inspect-files")).toBeVisible();
+
+  await page.locator("[data-tile]").nth(1).click({ force: true });
+  await expect(page.getByTestId("agent-inspect-panel")).toHaveCount(0);
+
+  await page.getByTestId("agent-inspect-toggle").nth(1).click();
+  await expect(page.getByTestId("agent-inspect-panel")).toBeVisible();
+  await page.getByTestId("agent-inspect-close").click();
+  await expect(page.getByTestId("agent-inspect-panel")).toHaveCount(0);
 });

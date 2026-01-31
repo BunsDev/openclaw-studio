@@ -303,6 +303,20 @@ textarea:focus::-webkit-scrollbar {
     0 8px 18px color-mix(in oklch, var(--foreground) 12%, transparent);
 }
 
+.agent-inspect-panel {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: min(92vw, 420px);
+  background: var(--card);
+  border-right: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+  overflow-y: auto;
+  pointer-events: auto;
+  z-index: 5;
+}
+
 @keyframes fadeUp {
   from {
     opacity: 0;
