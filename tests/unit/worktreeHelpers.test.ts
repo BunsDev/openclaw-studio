@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { buildAgentInstruction } from "@/lib/projects/message";
+import { buildAgentInstruction } from "@/lib/text/message-metadata";
 
 describe("buildAgentInstruction", () => {
   it("includes workspace path without worktree hints", () => {

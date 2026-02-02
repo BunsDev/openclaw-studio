@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import path from "node:path";
 
-import { buildAgentInstruction } from "@/lib/projects/message";
+import { buildAgentInstruction } from "@/lib/text/message-metadata";
 import {
   resolveDefaultAgentId,
   resolveDefaultWorkspacePath,

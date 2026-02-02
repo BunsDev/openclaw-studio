@@ -15,7 +15,7 @@ import {
   isTraceMarkdown,
   extractToolLines,
 } from "@/lib/text/message-extract";
-import { isHeartbeatPrompt, isUiMetadataPrefix, stripUiMetadata } from "@/lib/text/uiMetadata";
+import { isHeartbeatPrompt, isUiMetadataPrefix, stripUiMetadata } from "@/lib/text/message-metadata";
 import { useGatewayConnection } from "@/lib/gateway/useGatewayConnection";
 import type { EventFrame } from "@/lib/gateway/frames";
 import type { GatewayModelChoice } from "@/lib/gateway/models";
@@ -37,7 +37,7 @@ import {
   fetchCronJobs,
 } from "@/lib/projects/client";
 import { createRandomAgentName, normalizeAgentName } from "@/lib/names/agentNames";
-import { buildAgentInstruction } from "@/lib/projects/message";
+import { buildAgentInstruction } from "@/lib/text/message-metadata";
 import { filterArchivedItems } from "@/lib/projects/archive";
 import type { AgentTile, ProjectRuntime } from "@/features/canvas/state/store";
 import type { CronJobSummary } from "@/lib/projects/types";
