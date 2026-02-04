@@ -28,7 +28,7 @@ Non-goals:
 This keeps feature cohesion high while preserving a clear client/server boundary.
 
 ## Main modules / bounded contexts
-- **Focused agent UI** (`src/features/agents`): focused agent panel, fleet sidebar, inspect panel, and local in-memory state + actions. The fleet sidebar includes a `New Agent` action that calls gateway config patching and works for both local and remote gateways. Agents render a status-first summary and latest-update preview driven by gateway events. Per-agent runtime controls (`model`, `thinking`) live in the chat header (`AgentChatPanel`), while settings sidebar actions are focused on rename, display toggles, new session, and delete (`AgentSettingsPanel`). Gateway event classification (`presence`/`heartbeat` summary refresh and `chat`/`agent` runtime streams) is centralized in bridge helpers (`src/features/agents/state/runtimeEventBridge.ts`) and consumed from one gateway subscription path in `src/app/page.tsx`. Session setting mutations (model/thinking) are centralized in `src/features/agents/state/sessionSettingsMutations.ts` so optimistic state updates and sync/error behavior stay aligned. Full transcripts load only on explicit “Load history” actions.
+- **Focused agent UI** (`src/features/agents`): focused agent panel, fleet sidebar, inspect panel, and local in-memory state + actions. The fleet sidebar includes a `New Agent` action that calls gateway config patching and works for both local and remote gateways. Agents render a status-first summary and latest-update preview driven by gateway events. Per-agent runtime controls (`model`, `thinking`) live in the chat header (`AgentChatPanel`), while settings sidebar actions are focused on rename, display toggles, new session, cron list/run/delete, and delete (`AgentSettingsPanel`). Gateway event classification (`presence`/`heartbeat` summary refresh and `chat`/`agent` runtime streams) is centralized in bridge helpers (`src/features/agents/state/runtimeEventBridge.ts`) and consumed from one gateway subscription path in `src/app/page.tsx`. Session setting mutations (model/thinking) are centralized in `src/features/agents/state/sessionSettingsMutations.ts` so optimistic state updates and sync/error behavior stay aligned. Full transcripts load only on explicit “Load history” actions.
 - **Studio settings** (`src/lib/studio`, `src/app/api/studio`): local settings store for gateway URL/token and focused preferences (`src/lib/studio/settings.ts`, `src/lib/studio/settings.server.ts`, `src/app/api/studio/route.ts`). `src/lib/studio/coordinator.ts` now owns both the `/api/studio` transport helpers and shared client-side load/patch scheduling for gateway, focused, and studio-session settings.
 - **Gateway** (`src/lib/gateway`): WebSocket client for agent runtime (frames, connect, request/response). Session settings sync transport (`sessions.patch`) is centralized in `src/lib/gateway/sessionSettings.ts`. The OpenClaw control UI client is vendored in `src/lib/gateway/openclaw/GatewayBrowserClient.ts` with a sync script at `scripts/sync-openclaw-gateway-client.ts`.
 - **Gateway-backed config + agent-file edits** (`src/lib/gateway/agentConfig.ts`, `src/app/api/gateway/tools/route.ts`): agent create/rename/heartbeat/delete via `config.get` + `config.patch`, agent file read/write via `/tools/invoke` proxy.
@@ -81,8 +81,8 @@ Flow:
 2. Agent file edits call `/api/gateway/tools`, which proxies to the gateway `/tools/invoke` endpoint with `read`/`write` and a session key.
 3. UI reflects persisted state returned by the gateway.
 
-### 4) Cron summaries + Discord provisioning
-- **Cron**: `GET /api/cron` reads `~/.openclaw/cron/jobs.json` (local state dir) to display scheduled jobs.
+### 4) Cron summaries + settings controls + Discord provisioning
+- **Cron**: the UI calls gateway cron methods directly (`cron.list`, `cron.run`, `cron.remove`) for latest-update previews and agent settings controls.
 - **Discord**: API route calls `createDiscordChannelForAgent`, uses `DISCORD_BOT_TOKEN` from the resolved state-dir `.env`, and updates local `openclaw.json` bindings.
 
 ### 5) Session settings synchronization
@@ -97,7 +97,7 @@ Flow:
   - API routes return JSON `{ error }` with appropriate status.
   - `fetchJson` throws when `!res.ok`, surfaces errors to UI state.
   - `StudioSettingsCoordinator` logs failed async persistence writes (debounced flush or queued patch failures) so settings-save errors are observable.
-- **Filesystem helpers**: server-only utilities live in `src/lib/fs.server.ts` (safe directory/file creation, home-scoped path autocomplete). These are used for local settings, cron summaries, and path suggestions, not for agent file edits.
+- **Filesystem helpers**: server-only utilities live in `src/lib/fs.server.ts` (safe directory/file creation, home-scoped path autocomplete). These are used for local settings and path suggestions, not for agent file edits.
 - **Tracing**: `src/instrumentation.ts` registers `@vercel/otel` for telemetry.
 - **Validation**: request payload validation in API routes and typed client/server helpers in `src/lib/*`.
 
@@ -126,7 +126,7 @@ C4Context
   Person(user, "User", "Operates agents locally")
   System(ui, "OpenClaw Studio", "Next.js App Router UI")
   System_Ext(gateway, "OpenClaw Gateway", "WebSocket runtime")
-  System_Ext(fs, "Local Filesystem", "settings.json, cron/jobs.json, optional openclaw.json")
+  System_Ext(fs, "Local Filesystem", "settings.json, optional openclaw.json")
   System_Ext(discord, "Discord API", "Optional channel provisioning")
 
   Rel(user, ui, "Uses")
@@ -143,11 +143,11 @@ C4Container
 
   Container_Boundary(app, "Next.js App") {
     Container(client, "Client UI", "React", "Focused agent-management UI, state, gateway client")
-    Container(api, "API Routes", "Next.js route handlers", "Studio settings, gateway tools, cron, Discord")
+    Container(api, "API Routes", "Next.js route handlers", "Studio settings, gateway tools, Discord")
   }
 
   Container_Ext(gateway, "Gateway", "WebSocket", "Agent runtime")
-  Container_Ext(fs, "Filesystem", "Local", "settings.json, cron/jobs.json, optional openclaw.json")
+  Container_Ext(fs, "Filesystem", "Local", "settings.json, optional openclaw.json")
   Container_Ext(discord, "Discord API", "REST", "Channel provisioning")
 
   Rel(user, client, "Uses")

@@ -52,9 +52,10 @@ import {
   resolveLifecyclePatch,
   shouldPublishAssistantStream,
 } from "@/features/agents/state/runtimeEventBridge";
-import { fetchCronJobs } from "@/lib/cron/client";
 import type { AgentStoreSeed, AgentState } from "@/features/agents/state/store";
 import type { CronJobSummary } from "@/lib/cron/types";
+import { listCronJobs, removeCronJob, runCronJobNow } from "@/lib/cron/gateway";
+import { filterCronJobsForAgent, resolveLatestCronJobForAgent } from "@/lib/cron/selectors";
 import { logger } from "@/lib/logger";
 import {
   createGatewayAgent,
@@ -148,7 +149,9 @@ const formatCronSchedule = (schedule: CronJobSummary["schedule"]) => {
   if (schedule.kind === "cron") {
     return schedule.tz ? `Cron: ${schedule.expr} (${schedule.tz})` : `Cron: ${schedule.expr}`;
   }
-  return `At: ${new Date(schedule.atMs).toLocaleString()}`;
+  const atDate = new Date(schedule.at);
+  if (Number.isNaN(atDate.getTime())) return `At: ${schedule.at}`;
+  return `At: ${atDate.toLocaleString()}`;
 };
 
 const buildCronDisplay = (job: CronJobSummary) => {
@@ -157,6 +160,9 @@ const buildCronDisplay = (job: CronJobSummary) => {
   const lines = [job.name, formatCronSchedule(job.schedule), payloadText].filter(Boolean);
   return lines.join("\n");
 };
+
+const sortCronJobsByUpdatedAt = (jobs: CronJobSummary[]) =>
+  [...jobs].sort((a, b) => b.updatedAtMs - a.updatedAtMs);
 
 const toTimestampMs = (value: unknown): number | null => {
   if (typeof value === "number" && Number.isFinite(value) && value > 0) {
@@ -274,6 +280,11 @@ const AgentStudioPage = () => {
   const [createAgentBusy, setCreateAgentBusy] = useState(false);
   const [mobilePane, setMobilePane] = useState<MobilePane>("chat");
   const [settingsAgentId, setSettingsAgentId] = useState<string | null>(null);
+  const [settingsCronJobs, setSettingsCronJobs] = useState<CronJobSummary[]>([]);
+  const [settingsCronLoading, setSettingsCronLoading] = useState(false);
+  const [settingsCronError, setSettingsCronError] = useState<string | null>(null);
+  const [cronRunBusyJobId, setCronRunBusyJobId] = useState<string | null>(null);
+  const [cronDeleteBusyJobId, setCronDeleteBusyJobId] = useState<string | null>(null);
   const [brainPanelOpen, setBrainPanelOpen] = useState(false);
   const studioSessionIdRef = useRef<string | null>(null);
   const thinkingDebugRef = useRef<Set<string>>(new Set());
@@ -408,12 +419,34 @@ const AgentStudioPage = () => {
   }, []);
 
   const resolveCronJobForAgent = useCallback((jobs: CronJobSummary[], agent: AgentState) => {
-    if (!jobs.length) return null;
-    const agentId = agent.agentId?.trim();
-    const filtered = agentId ? jobs.filter((job) => job.agentId === agentId) : jobs;
-    const active = filtered.length > 0 ? filtered : jobs;
-    return [...active].sort((a, b) => b.updatedAtMs - a.updatedAtMs)[0] ?? null;
+    return resolveLatestCronJobForAgent(jobs, agent.agentId);
   }, []);
+
+  const loadCronJobsForSettingsAgent = useCallback(
+    async (agentId: string) => {
+      const resolvedAgentId = agentId.trim();
+      if (!resolvedAgentId) {
+        setSettingsCronJobs([]);
+        setSettingsCronError("Failed to load cron jobs: missing agent id.");
+        return;
+      }
+      setSettingsCronLoading(true);
+      setSettingsCronError(null);
+      try {
+        const result = await listCronJobs(client, { includeDisabled: true });
+        const filtered = filterCronJobsForAgent(result.jobs, resolvedAgentId);
+        setSettingsCronJobs(sortCronJobsByUpdatedAt(filtered));
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Failed to load cron jobs.";
+        setSettingsCronJobs([]);
+        setSettingsCronError(message);
+        logger.error(message);
+      } finally {
+        setSettingsCronLoading(false);
+      }
+    },
+    [client]
+  );
 
   const updateSpecialLatestUpdate = useCallback(
     async (agentId: string, agent: AgentState, message: string) => {
@@ -482,7 +515,7 @@ const AgentStudioPage = () => {
           });
           return;
         }
-        const cronResult = await fetchCronJobs();
+        const cronResult = await listCronJobs(client, { includeDisabled: true });
         const job = resolveCronJobForAgent(cronResult.jobs, agent);
         const content = job ? buildCronDisplay(job) : "";
         dispatch({
@@ -731,6 +764,18 @@ const AgentStudioPage = () => {
   }, [settingsAgentId, settingsAgent]);
 
   useEffect(() => {
+    if (!settingsAgentId || status !== "connected") {
+      setSettingsCronJobs([]);
+      setSettingsCronLoading(false);
+      setSettingsCronError(null);
+      setCronRunBusyJobId(null);
+      setCronDeleteBusyJobId(null);
+      return;
+    }
+    void loadCronJobsForSettingsAgent(settingsAgentId);
+  }, [loadCronJobsForSettingsAgent, settingsAgentId, status]);
+
+  useEffect(() => {
     if (!brainPanelOpen) return;
     if (selectedBrainAgentId) return;
     setBrainPanelOpen(false);
@@ -937,6 +982,53 @@ const AgentStudioPage = () => {
       }
     },
     [agents, client, loadAgents, setError]
+  );
+
+  const handleRunCronJob = useCallback(
+    async (agentId: string, jobId: string) => {
+      const resolvedJobId = jobId.trim();
+      const resolvedAgentId = agentId.trim();
+      if (!resolvedJobId || !resolvedAgentId) return;
+      if (cronRunBusyJobId || cronDeleteBusyJobId) return;
+      setCronRunBusyJobId(resolvedJobId);
+      setSettingsCronError(null);
+      try {
+        await runCronJobNow(client, resolvedJobId);
+        await loadCronJobsForSettingsAgent(resolvedAgentId);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Failed to run cron job.";
+        setSettingsCronError(message);
+        logger.error(message);
+      } finally {
+        setCronRunBusyJobId((current) => (current === resolvedJobId ? null : current));
+      }
+    },
+    [client, cronDeleteBusyJobId, cronRunBusyJobId, loadCronJobsForSettingsAgent]
+  );
+
+  const handleDeleteCronJob = useCallback(
+    async (agentId: string, jobId: string) => {
+      const resolvedJobId = jobId.trim();
+      const resolvedAgentId = agentId.trim();
+      if (!resolvedJobId || !resolvedAgentId) return;
+      if (cronRunBusyJobId || cronDeleteBusyJobId) return;
+      setCronDeleteBusyJobId(resolvedJobId);
+      setSettingsCronError(null);
+      try {
+        const result = await removeCronJob(client, resolvedJobId);
+        if (result.ok && result.removed) {
+          setSettingsCronJobs((jobs) => jobs.filter((job) => job.id !== resolvedJobId));
+        }
+        await loadCronJobsForSettingsAgent(resolvedAgentId);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Failed to delete cron job.";
+        setSettingsCronError(message);
+        logger.error(message);
+      } finally {
+        setCronDeleteBusyJobId((current) => (current === resolvedJobId ? null : current));
+      }
+    },
+    [client, cronDeleteBusyJobId, cronRunBusyJobId, loadCronJobsForSettingsAgent]
   );
 
   const handleCreateAgent = useCallback(async () => {
@@ -1757,6 +1849,13 @@ const AgentStudioPage = () => {
                   onThinkingTracesToggle={(enabled) =>
                     handleThinkingTracesToggle(settingsAgent.agentId, enabled)
                   }
+                  cronJobs={settingsCronJobs}
+                  cronLoading={settingsCronLoading}
+                  cronError={settingsCronError}
+                  cronRunBusyJobId={cronRunBusyJobId}
+                  cronDeleteBusyJobId={cronDeleteBusyJobId}
+                  onRunCronJob={(jobId) => handleRunCronJob(settingsAgent.agentId, jobId)}
+                  onDeleteCronJob={(jobId) => handleDeleteCronJob(settingsAgent.agentId, jobId)}
                 />
               </div>
             ) : null}

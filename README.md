@@ -20,6 +20,7 @@ OpenClaw Studio solves this. It's a Next.js app that connects to your OpenClaw g
 - Creates new agents directly from the fleet sidebar (`New Agent`)
 - Lets you change per-agent runtime model/thinking directly from the agent header
 - Keeps per-agent management actions in settings (rename, display toggles, new session, delete)
+- Lists per-agent cron jobs in settings and lets you run now or delete
 - Reads and edits agent files (AGENTS.md, MEMORY.md, etc.) via the gateway
 - Streams tool output in real time
 - Provisions Discord channels when you need them

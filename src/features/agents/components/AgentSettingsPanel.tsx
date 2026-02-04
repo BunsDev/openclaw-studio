@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Play, Trash2 } from "lucide-react";
 import type { AgentState } from "@/features/agents/state/store";
+import type { CronJobSummary } from "@/lib/cron/types";
 
 type AgentSettingsPanelProps = {
   agent: AgentState;
@@ -11,6 +13,35 @@ type AgentSettingsPanelProps = {
   onDelete: () => void;
   onToolCallingToggle: (enabled: boolean) => void;
   onThinkingTracesToggle: (enabled: boolean) => void;
+  cronJobs: CronJobSummary[];
+  cronLoading: boolean;
+  cronError: string | null;
+  cronRunBusyJobId: string | null;
+  cronDeleteBusyJobId: string | null;
+  onRunCronJob: (jobId: string) => Promise<void> | void;
+  onDeleteCronJob: (jobId: string) => Promise<void> | void;
+};
+
+const formatEveryMs = (everyMs: number) => {
+  if (everyMs % 3600000 === 0) return `Every ${everyMs / 3600000}h`;
+  if (everyMs % 60000 === 0) return `Every ${everyMs / 60000}m`;
+  if (everyMs % 1000 === 0) return `Every ${everyMs / 1000}s`;
+  return `Every ${everyMs}ms`;
+};
+
+const formatCronSchedule = (schedule: CronJobSummary["schedule"]) => {
+  if (schedule.kind === "every") return formatEveryMs(schedule.everyMs);
+  if (schedule.kind === "cron") {
+    return schedule.tz ? `Cron: ${schedule.expr} (${schedule.tz})` : `Cron: ${schedule.expr}`;
+  }
+  const date = new Date(schedule.at);
+  if (Number.isNaN(date.getTime())) return `At: ${schedule.at}`;
+  return `At: ${date.toLocaleString()}`;
+};
+
+const formatCronPayload = (payload: CronJobSummary["payload"]) => {
+  if (payload.kind === "systemEvent") return payload.text;
+  return payload.message;
 };
 
 export const AgentSettingsPanel = ({
@@ -21,6 +52,13 @@ export const AgentSettingsPanel = ({
   onDelete,
   onToolCallingToggle,
   onThinkingTracesToggle,
+  cronJobs,
+  cronLoading,
+  cronError,
+  cronRunBusyJobId,
+  cronDeleteBusyJobId,
+  onRunCronJob,
+  onDeleteCronJob,
 }: AgentSettingsPanelProps) => {
   const [nameDraft, setNameDraft] = useState(agent.name);
   const [renameSaving, setRenameSaving] = useState(false);
@@ -167,6 +205,74 @@ export const AgentSettingsPanel = ({
           >
             {sessionBusy ? "Starting..." : "New session"}
           </button>
+        </section>
+
+        <section className="rounded-md border border-border/80 bg-card/70 p-4" data-testid="agent-settings-cron">
+          <div className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+            Cron jobs
+          </div>
+          {cronLoading ? (
+            <div className="mt-3 text-[11px] text-muted-foreground">Loading cron jobs...</div>
+          ) : null}
+          {!cronLoading && cronError ? (
+            <div className="mt-3 rounded-md border border-destructive bg-destructive px-3 py-2 text-xs text-destructive-foreground">
+              {cronError}
+            </div>
+          ) : null}
+          {!cronLoading && !cronError && cronJobs.length === 0 ? (
+            <div className="mt-3 text-[11px] text-muted-foreground">No cron jobs for this agent.</div>
+          ) : null}
+          {!cronLoading && !cronError && cronJobs.length > 0 ? (
+            <div className="mt-3 flex flex-col gap-2">
+              {cronJobs.map((job) => {
+                const runBusy = cronRunBusyJobId === job.id;
+                const deleteBusy = cronDeleteBusyJobId === job.id;
+                const busy = runBusy || deleteBusy;
+                return (
+                  <div
+                    key={job.id}
+                    className="group/cron flex items-start justify-between gap-2 rounded-md border border-border/80 bg-card/75 px-3 py-2"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-foreground">
+                        {job.name}
+                      </div>
+                      <div className="truncate text-[11px] text-muted-foreground">
+                        {formatCronSchedule(job.schedule)}
+                      </div>
+                      <div className="truncate text-[11px] text-muted-foreground">
+                        {formatCronPayload(job.payload)}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1 opacity-0 transition group-focus-within/cron:opacity-100 group-hover/cron:opacity-100">
+                      <button
+                        className="flex h-7 w-7 items-center justify-center rounded-md border border-border/80 bg-card/70 text-muted-foreground transition hover:border-border hover:bg-muted/65 disabled:cursor-not-allowed disabled:opacity-60"
+                        type="button"
+                        aria-label={`Run cron job ${job.name} now`}
+                        onClick={() => {
+                          void onRunCronJob(job.id);
+                        }}
+                        disabled={busy}
+                      >
+                        <Play className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        className="flex h-7 w-7 items-center justify-center rounded-md border border-destructive/40 bg-transparent text-destructive transition hover:bg-destructive/10 disabled:cursor-not-allowed disabled:opacity-60"
+                        type="button"
+                        aria-label={`Delete cron job ${job.name}`}
+                        onClick={() => {
+                          void onDeleteCronJob(job.id);
+                        }}
+                        disabled={busy}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : null}
         </section>
 
         <section className="rounded-md border border-destructive/30 bg-destructive/4 p-4">

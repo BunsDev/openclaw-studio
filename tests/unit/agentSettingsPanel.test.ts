@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { AgentState } from "@/features/agents/state/store";
 import { AgentSettingsPanel } from "@/features/agents/components/AgentSettingsPanel";
+import type { CronJobSummary } from "@/lib/cron/types";
 
 const createAgent = (): AgentState => ({
   agentId: "agent-1",
@@ -35,6 +36,19 @@ const createAgent = (): AgentState => ({
   avatarUrl: null,
 });
 
+const createCronJob = (id: string): CronJobSummary => ({
+  id,
+  name: `Job ${id}`,
+  agentId: "agent-1",
+  enabled: true,
+  updatedAtMs: Date.now(),
+  schedule: { kind: "every", everyMs: 60_000 },
+  sessionTarget: "isolated",
+  wakeMode: "next-heartbeat",
+  payload: { kind: "agentTurn", message: "hi" },
+  state: {},
+});
+
 describe("AgentSettingsPanel", () => {
   afterEach(() => {
     cleanup();
@@ -51,6 +65,13 @@ describe("AgentSettingsPanel", () => {
         onDelete: vi.fn(),
         onToolCallingToggle: vi.fn(),
         onThinkingTracesToggle: vi.fn(),
+        cronJobs: [],
+        cronLoading: false,
+        cronError: null,
+        cronRunBusyJobId: null,
+        cronDeleteBusyJobId: null,
+        onRunCronJob: vi.fn(),
+        onDeleteCronJob: vi.fn(),
       })
     );
 
@@ -74,6 +95,13 @@ describe("AgentSettingsPanel", () => {
         onDelete: vi.fn(),
         onToolCallingToggle: vi.fn(),
         onThinkingTracesToggle: vi.fn(),
+        cronJobs: [],
+        cronLoading: false,
+        cronError: null,
+        cronRunBusyJobId: null,
+        cronDeleteBusyJobId: null,
+        onRunCronJob: vi.fn(),
+        onDeleteCronJob: vi.fn(),
       })
     );
 
@@ -91,6 +119,13 @@ describe("AgentSettingsPanel", () => {
         onDelete: vi.fn(),
         onToolCallingToggle: vi.fn(),
         onThinkingTracesToggle: vi.fn(),
+        cronJobs: [],
+        cronLoading: false,
+        cronError: null,
+        cronRunBusyJobId: null,
+        cronDeleteBusyJobId: null,
+        onRunCronJob: vi.fn(),
+        onDeleteCronJob: vi.fn(),
       })
     );
 
@@ -109,10 +144,161 @@ describe("AgentSettingsPanel", () => {
         onDelete: vi.fn(),
         onToolCallingToggle: vi.fn(),
         onThinkingTracesToggle: vi.fn(),
+        cronJobs: [],
+        cronLoading: false,
+        cronError: null,
+        cronRunBusyJobId: null,
+        cronDeleteBusyJobId: null,
+        onRunCronJob: vi.fn(),
+        onDeleteCronJob: vi.fn(),
       })
     );
 
     fireEvent.click(screen.getByRole("button", { name: "New session" }));
     expect(onNewSession).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders_cron_jobs_section_below_session", () => {
+    render(
+      createElement(AgentSettingsPanel, {
+        agent: createAgent(),
+        onClose: vi.fn(),
+        onRename: vi.fn(async () => true),
+        onNewSession: vi.fn(),
+        onDelete: vi.fn(),
+        onToolCallingToggle: vi.fn(),
+        onThinkingTracesToggle: vi.fn(),
+        cronJobs: [createCronJob("job-1")],
+        cronLoading: false,
+        cronError: null,
+        cronRunBusyJobId: null,
+        cronDeleteBusyJobId: null,
+        onRunCronJob: vi.fn(),
+        onDeleteCronJob: vi.fn(),
+      })
+    );
+
+    const sessionSection = screen.getByTestId("agent-settings-session");
+    const cronSection = screen.getByTestId("agent-settings-cron");
+    expect(cronSection).toBeInTheDocument();
+    const position = sessionSection.compareDocumentPosition(cronSection);
+    expect(position & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("invokes_run_now_and_disables_play_while_pending", () => {
+    const onRunCronJob = vi.fn();
+    const cronJobs = [createCronJob("job-1")];
+    const { rerender } = render(
+      createElement(AgentSettingsPanel, {
+        agent: createAgent(),
+        onClose: vi.fn(),
+        onRename: vi.fn(async () => true),
+        onNewSession: vi.fn(),
+        onDelete: vi.fn(),
+        onToolCallingToggle: vi.fn(),
+        onThinkingTracesToggle: vi.fn(),
+        cronJobs,
+        cronLoading: false,
+        cronError: null,
+        cronRunBusyJobId: null,
+        cronDeleteBusyJobId: null,
+        onRunCronJob,
+        onDeleteCronJob: vi.fn(),
+      })
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Run cron job Job job-1 now" }));
+    expect(onRunCronJob).toHaveBeenCalledWith("job-1");
+
+    rerender(
+      createElement(AgentSettingsPanel, {
+        agent: createAgent(),
+        onClose: vi.fn(),
+        onRename: vi.fn(async () => true),
+        onNewSession: vi.fn(),
+        onDelete: vi.fn(),
+        onToolCallingToggle: vi.fn(),
+        onThinkingTracesToggle: vi.fn(),
+        cronJobs,
+        cronLoading: false,
+        cronError: null,
+        cronRunBusyJobId: "job-1",
+        cronDeleteBusyJobId: null,
+        onRunCronJob,
+        onDeleteCronJob: vi.fn(),
+      })
+    );
+
+    expect(screen.getByRole("button", { name: "Run cron job Job job-1 now" })).toBeDisabled();
+  });
+
+  it("invokes_delete_and_disables_trash_while_pending", () => {
+    const onDeleteCronJob = vi.fn();
+    const cronJobs = [createCronJob("job-1")];
+    const { rerender } = render(
+      createElement(AgentSettingsPanel, {
+        agent: createAgent(),
+        onClose: vi.fn(),
+        onRename: vi.fn(async () => true),
+        onNewSession: vi.fn(),
+        onDelete: vi.fn(),
+        onToolCallingToggle: vi.fn(),
+        onThinkingTracesToggle: vi.fn(),
+        cronJobs,
+        cronLoading: false,
+        cronError: null,
+        cronRunBusyJobId: null,
+        cronDeleteBusyJobId: null,
+        onRunCronJob: vi.fn(),
+        onDeleteCronJob,
+      })
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Delete cron job Job job-1" }));
+    expect(onDeleteCronJob).toHaveBeenCalledWith("job-1");
+
+    rerender(
+      createElement(AgentSettingsPanel, {
+        agent: createAgent(),
+        onClose: vi.fn(),
+        onRename: vi.fn(async () => true),
+        onNewSession: vi.fn(),
+        onDelete: vi.fn(),
+        onToolCallingToggle: vi.fn(),
+        onThinkingTracesToggle: vi.fn(),
+        cronJobs,
+        cronLoading: false,
+        cronError: null,
+        cronRunBusyJobId: null,
+        cronDeleteBusyJobId: "job-1",
+        onRunCronJob: vi.fn(),
+        onDeleteCronJob,
+      })
+    );
+
+    expect(screen.getByRole("button", { name: "Delete cron job Job job-1" })).toBeDisabled();
+  });
+
+  it("shows_empty_cron_state_when_agent_has_no_jobs", () => {
+    render(
+      createElement(AgentSettingsPanel, {
+        agent: createAgent(),
+        onClose: vi.fn(),
+        onRename: vi.fn(async () => true),
+        onNewSession: vi.fn(),
+        onDelete: vi.fn(),
+        onToolCallingToggle: vi.fn(),
+        onThinkingTracesToggle: vi.fn(),
+        cronJobs: [],
+        cronLoading: false,
+        cronError: null,
+        cronRunBusyJobId: null,
+        cronDeleteBusyJobId: null,
+        onRunCronJob: vi.fn(),
+        onDeleteCronJob: vi.fn(),
+      })
+    );
+
+    expect(screen.getByText("No cron jobs for this agent.")).toBeInTheDocument();
   });
 });
