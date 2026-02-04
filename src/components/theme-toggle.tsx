@@ -37,6 +37,7 @@ export const ThemeToggle = () => {
       if (typeof window !== "undefined") {
         window.localStorage.setItem(THEME_STORAGE_KEY, next);
       }
+      applyTheme(next);
       return next;
     });
   };
