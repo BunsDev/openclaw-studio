@@ -6,6 +6,7 @@ import { normalizeAgentName } from "@/lib/names/agentNames";
 import { Shuffle } from "lucide-react";
 import { AgentAvatar } from "./AgentAvatar";
 import { buildAgentChatItems, summarizeToolLabel } from "./chatItems";
+import { EmptyStatePanel } from "./EmptyStatePanel";
 
 type AgentChatPanelProps = {
   agent: AgentRecord;
@@ -210,7 +211,7 @@ export const AgentChatPanel = ({
         >
           <div className="flex flex-col gap-3 text-xs text-foreground">
             {chatItems.length === 0 ? (
-              <div className="text-xs text-muted-foreground">No messages yet.</div>
+              <EmptyStatePanel title="No messages yet." compact className="p-3 text-xs" />
             ) : (
               <>
                 {chatItems.map((item, index) => {

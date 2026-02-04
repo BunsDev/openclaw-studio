@@ -1,6 +1,7 @@
 import type { AgentState, FocusFilter } from "@/features/agents/state/store";
 import { getAttentionForAgent } from "@/features/agents/state/store";
 import { AgentAvatar } from "./AgentAvatar";
+import { EmptyStatePanel } from "./EmptyStatePanel";
 
 type FleetSidebarProps = {
   agents: AgentState[];
@@ -77,9 +78,7 @@ export const FleetSidebar = ({
 
       <div className="min-h-0 flex-1 overflow-auto">
         {agents.length === 0 ? (
-          <div className="rounded-md border border-border/80 bg-card/75 p-3 text-xs text-muted-foreground">
-            No agents available.
-          </div>
+          <EmptyStatePanel title="No agents available." compact className="p-3 text-xs" />
         ) : (
           <div className="flex flex-col gap-2">
             {agents.map((agent) => {

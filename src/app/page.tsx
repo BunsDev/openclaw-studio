@@ -6,6 +6,7 @@ import { AgentInspectPanel } from "@/features/agents/components/AgentInspectPane
 import { FleetSidebar } from "@/features/agents/components/FleetSidebar";
 import { HeaderBar } from "@/features/agents/components/HeaderBar";
 import { ConnectionPanel } from "@/features/agents/components/ConnectionPanel";
+import { EmptyStatePanel } from "@/features/agents/components/EmptyStatePanel";
 import {
   extractText,
   extractThinking,
@@ -134,6 +135,8 @@ type StatusSummary = {
     byAgent?: Array<{ agentId: string; recent: SessionStatusSummary[] }>;
   };
 };
+
+type MobilePane = "fleet" | "chat" | "inspect";
 
 const SPECIAL_UPDATE_HEARTBEAT_RE = /\bheartbeat\b/i;
 const SPECIAL_UPDATE_CRON_RE = /\bcron\b/i;
@@ -330,6 +333,7 @@ const AgentStudioPage = () => {
   const [gatewayModels, setGatewayModels] = useState<GatewayModelChoice[]>([]);
   const [gatewayModelsError, setGatewayModelsError] = useState<string | null>(null);
   const [inspectAgentId, setInspectAgentId] = useState<string | null>(null);
+  const [mobilePane, setMobilePane] = useState<MobilePane>("chat");
   const studioSessionIdRef = useRef<string | null>(null);
   const thinkingDebugRef = useRef<Set<string>>(new Set());
   const chatRunSeenRef = useRef<Set<string>>(new Set());
@@ -862,6 +866,12 @@ const AgentStudioPage = () => {
   }, [inspectAgentId, inspectAgent]);
 
   useEffect(() => {
+    if (mobilePane !== "inspect") return;
+    if (inspectAgent) return;
+    setMobilePane("chat");
+  }, [inspectAgent, mobilePane]);
+
+  useEffect(() => {
     if (status !== "connected") {
       setGatewayModels([]);
       setGatewayModelsError(null);
@@ -1127,6 +1137,7 @@ const AgentStudioPage = () => {
   const handleInspectAgent = useCallback(
     (agentId: string) => {
       setInspectAgentId(agentId);
+      setMobilePane("inspect");
       dispatch({ type: "selectAgent", agentId });
     },
     [dispatch]
@@ -1770,17 +1781,60 @@ const AgentStudioPage = () => {
 
         {hasAnyAgents ? (
           <div className="flex min-h-0 flex-1 flex-col gap-4 xl:flex-row">
-            <FleetSidebar
-              agents={filteredAgents}
-              selectedAgentId={focusedAgent?.agentId ?? state.selectedAgentId}
-              filter={focusFilter}
-              onFilterChange={handleFocusFilterChange}
-              onSelectAgent={(agentId) =>
-                dispatch({ type: "selectAgent", agentId })
-              }
-            />
+            <div className="glass-panel p-2 xl:hidden" data-testid="mobile-pane-toggle">
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  className={`rounded-md border px-2 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.13em] transition ${
+                    mobilePane === "fleet"
+                      ? "border-border bg-muted text-foreground shadow-xs"
+                      : "border-border/80 bg-card/65 text-muted-foreground hover:border-border hover:bg-muted/70"
+                  }`}
+                  onClick={() => setMobilePane("fleet")}
+                >
+                  Fleet
+                </button>
+                <button
+                  type="button"
+                  className={`rounded-md border px-2 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.13em] transition ${
+                    mobilePane === "chat"
+                      ? "border-border bg-muted text-foreground shadow-xs"
+                      : "border-border/80 bg-card/65 text-muted-foreground hover:border-border hover:bg-muted/70"
+                  }`}
+                  onClick={() => setMobilePane("chat")}
+                >
+                  Chat
+                </button>
+                <button
+                  type="button"
+                  className={`rounded-md border px-2 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.13em] transition ${
+                    mobilePane === "inspect"
+                      ? "border-border bg-muted text-foreground shadow-xs"
+                      : "border-border/80 bg-card/65 text-muted-foreground hover:border-border hover:bg-muted/70"
+                  }`}
+                  onClick={() => setMobilePane("inspect")}
+                  disabled={!inspectAgent}
+                >
+                  Inspect
+                </button>
+              </div>
+            </div>
             <div
-              className="glass-panel min-h-0 flex-1 overflow-hidden p-2 sm:p-3"
+              className={`${mobilePane === "fleet" ? "block" : "hidden"} min-h-0 xl:block xl:min-h-0`}
+            >
+              <FleetSidebar
+                agents={filteredAgents}
+                selectedAgentId={focusedAgent?.agentId ?? state.selectedAgentId}
+                filter={focusFilter}
+                onFilterChange={handleFocusFilterChange}
+                onSelectAgent={(agentId) => {
+                  dispatch({ type: "selectAgent", agentId });
+                  setMobilePane("chat");
+                }}
+              />
+            </div>
+            <div
+              className={`${mobilePane === "chat" ? "flex" : "hidden"} glass-panel min-h-0 flex-1 overflow-hidden p-2 sm:p-3 xl:flex`}
               data-testid="focused-agent-panel"
             >
               {focusedAgent ? (
@@ -1806,19 +1860,26 @@ const AgentStudioPage = () => {
                   onNameShuffle={() => handleNameShuffle(focusedAgent.agentId)}
                 />
               ) : (
-                <div className="flex h-full items-center justify-center rounded-md border border-border/80 bg-card/70 p-6 text-sm text-muted-foreground">
-                  No agents match this filter.
-                </div>
+                <EmptyStatePanel
+                  title="No agents match this filter."
+                  fillHeight
+                  className="items-center p-6 text-center text-sm"
+                />
               )}
             </div>
             {inspectAgent ? (
-              <div className="glass-panel min-h-0 w-full shrink-0 overflow-hidden p-0 xl:min-w-[360px] xl:max-w-[430px]">
+              <div
+                className={`${mobilePane === "inspect" ? "block" : "hidden"} glass-panel min-h-0 w-full shrink-0 overflow-hidden p-0 xl:block xl:min-w-[360px] xl:max-w-[430px]`}
+              >
                 <AgentInspectPanel
                   key={inspectAgent.agentId}
                   agent={inspectAgent}
                   client={client}
                   models={gatewayModels}
-                  onClose={() => setInspectAgentId(null)}
+                  onClose={() => {
+                    setInspectAgentId(null);
+                    setMobilePane("chat");
+                  }}
                   onDelete={() => handleDeleteAgent(inspectAgent.agentId)}
                   onModelChange={(value) =>
                     handleModelChange(inspectAgent.agentId, inspectAgent.sessionKey, value)
@@ -1838,22 +1899,18 @@ const AgentStudioPage = () => {
           </div>
         ) : (
           <div className="glass-panel fade-up-delay flex min-h-0 flex-1 flex-col overflow-hidden p-5 sm:p-6">
-            <div className="flex h-full flex-col items-center justify-center rounded-md border border-border/80 bg-card/70 px-6 py-10 text-center">
-              <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                Fleet
-              </p>
-              <p className="console-title mt-2 text-2xl leading-none text-foreground sm:text-3xl">
-                No agents available
-              </p>
-              <p className="mt-3 max-w-xl text-sm text-muted-foreground">
-                {status === "connected"
+            <EmptyStatePanel
+              label="Fleet"
+              title="No agents available"
+              description={
+                status === "connected"
                   ? "Connected to gateway, but no agents are currently configured."
-                  : "Connect to your gateway to load agents into the studio."}
-              </p>
-              <p className="mt-3 rounded-md border border-border/80 bg-background/75 px-4 py-2 font-mono text-[11px] text-muted-foreground/90">
-                {gatewayUrl || "Gateway URL is empty"}
-              </p>
-            </div>
+                  : "Connect to your gateway to load agents into the studio."
+              }
+              detail={gatewayUrl || "Gateway URL is empty"}
+              fillHeight
+              className="items-center px-6 py-10 text-center"
+            />
           </div>
         )}
       </div>
