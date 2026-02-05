@@ -243,4 +243,56 @@ describe("AgentChatPanel controls", () => {
 
     expect(screen.queryByTestId("agent-typing-indicator")).not.toBeInTheDocument();
   });
+
+  it("auto_expands_thinking_panel_while_run_is_active", () => {
+    render(
+      createElement(AgentChatPanel, {
+        agent: {
+          ...createAgent(),
+          status: "running",
+          outputLines: ["> test", formatThinkingMarkdown("thinking now")],
+        },
+        isSelected: true,
+        canSend: true,
+        models,
+        stopBusy: false,
+        onOpenSettings: vi.fn(),
+        onModelChange: vi.fn(),
+        onThinkingChange: vi.fn(),
+        onDraftChange: vi.fn(),
+        onSend: vi.fn(),
+        onStopRun: vi.fn(),
+        onAvatarShuffle: vi.fn(),
+      })
+    );
+
+    const thinkingSummary = screen.getByText("Thinking", { selector: "summary" });
+    expect(thinkingSummary.closest("details")).toHaveAttribute("open");
+  });
+
+  it("closes_thinking_panel_when_final_message_is_present", () => {
+    render(
+      createElement(AgentChatPanel, {
+        agent: {
+          ...createAgent(),
+          status: "running",
+          outputLines: ["> test", formatThinkingMarkdown("thinking now"), "final response"],
+        },
+        isSelected: true,
+        canSend: true,
+        models,
+        stopBusy: false,
+        onOpenSettings: vi.fn(),
+        onModelChange: vi.fn(),
+        onThinkingChange: vi.fn(),
+        onDraftChange: vi.fn(),
+        onSend: vi.fn(),
+        onStopRun: vi.fn(),
+        onAvatarShuffle: vi.fn(),
+      })
+    );
+
+    const thinkingSummary = screen.getByText("Thinking", { selector: "summary" });
+    expect(thinkingSummary.closest("details")).not.toHaveAttribute("open");
+  });
 });

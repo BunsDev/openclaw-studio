@@ -140,11 +140,22 @@ export type GatewayEventKind =
   | "runtime-agent"
   | "ignore";
 
+const REASONING_STREAM_NAME_HINTS = ["reason", "think", "analysis"];
+
 export const classifyGatewayEventKind = (event: string): GatewayEventKind => {
   if (event === "presence" || event === "heartbeat") return "summary-refresh";
   if (event === "chat") return "runtime-chat";
   if (event === "agent") return "runtime-agent";
   return "ignore";
+};
+
+export const isReasoningRuntimeAgentStream = (stream: string): boolean => {
+  const normalized = stream.trim().toLowerCase();
+  if (!normalized) return false;
+  if (normalized === "assistant" || normalized === "tool" || normalized === "lifecycle") {
+    return false;
+  }
+  return REASONING_STREAM_NAME_HINTS.some((hint) => normalized.includes(hint));
 };
 
 export const mergeRuntimeStream = (current: string, incoming: string): string => {

@@ -4,7 +4,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Cog, Shuffle } from "lucide-react";
 import type { GatewayModelChoice } from "@/lib/gateway/models";
-import { isTraceMarkdown } from "@/lib/text/message-extract";
+import { isToolMarkdown, isTraceMarkdown } from "@/lib/text/message-extract";
 import { AgentAvatar } from "./AgentAvatar";
 import { buildAgentChatItems, summarizeToolLabel } from "./chatItems";
 import { EmptyStatePanel } from "./EmptyStatePanel";
@@ -99,8 +99,7 @@ export const AgentChatPanel = ({
   const hasLiveAssistantText = Boolean(agent.streamText?.trim());
   const hasVisibleLiveThinking =
     agent.showThinkingTraces && Boolean(agent.thinkingTrace?.trim());
-  const hasSavedThinkingSinceLatestUser = useMemo(() => {
-    if (!agent.showThinkingTraces) return false;
+  const latestUserOutputIndex = useMemo(() => {
     let latestUserIndex = -1;
     for (let index = agent.outputLines.length - 1; index >= 0; index -= 1) {
       const line = agent.outputLines[index]?.trim();
@@ -110,14 +109,49 @@ export const AgentChatPanel = ({
         break;
       }
     }
-    if (latestUserIndex < 0) return false;
-    for (let index = latestUserIndex + 1; index < agent.outputLines.length; index += 1) {
+    return latestUserIndex;
+  }, [agent.outputLines]);
+  const hasSavedThinkingSinceLatestUser = useMemo(() => {
+    if (!agent.showThinkingTraces || latestUserOutputIndex < 0) return false;
+    for (
+      let index = latestUserOutputIndex + 1;
+      index < agent.outputLines.length;
+      index += 1
+    ) {
       if (isTraceMarkdown(agent.outputLines[index] ?? "")) {
         return true;
       }
     }
     return false;
-  }, [agent.outputLines, agent.showThinkingTraces]);
+  }, [agent.outputLines, agent.showThinkingTraces, latestUserOutputIndex]);
+  const hasSavedAssistantSinceLatestUser = useMemo(() => {
+    if (latestUserOutputIndex < 0) return false;
+    for (
+      let index = latestUserOutputIndex + 1;
+      index < agent.outputLines.length;
+      index += 1
+    ) {
+      const line = agent.outputLines[index]?.trim() ?? "";
+      if (!line) continue;
+      if (line.startsWith(">")) continue;
+      if (isTraceMarkdown(line)) continue;
+      if (isToolMarkdown(line)) continue;
+      return true;
+    }
+    return false;
+  }, [agent.outputLines, latestUserOutputIndex]);
+  const lastThinkingItemIndex = useMemo(() => {
+    for (let index = chatItems.length - 1; index >= 0; index -= 1) {
+      if (chatItems[index]?.kind === "thinking") {
+        return index;
+      }
+    }
+    return -1;
+  }, [chatItems]);
+  const autoExpandThinking =
+    agent.status === "running" &&
+    !hasSavedAssistantSinceLatestUser &&
+    lastThinkingItemIndex >= 0;
   const showTypingIndicator =
     agent.status === "running" &&
     !hasLiveAssistantText &&
@@ -273,7 +307,7 @@ export const AgentChatPanel = ({
                       <details
                         key={`chat-${agent.agentId}-thinking-${index}`}
                         className="rounded-md border border-border/70 bg-muted/55 px-2 py-1 text-[11px] text-muted-foreground"
-                        open={item.live && agent.status === "running"}
+                        open={autoExpandThinking && index === lastThinkingItemIndex}
                       >
                         <summary className="cursor-pointer select-none font-mono text-[10px] font-semibold uppercase tracking-[0.11em]">
                           Thinking

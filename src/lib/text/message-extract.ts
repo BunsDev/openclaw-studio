@@ -159,7 +159,23 @@ export const extractThinking = (message: unknown): string | null => {
   const parts: string[] = [];
 
   const extractFromRecord = (record: Record<string, unknown>): string | null => {
-    const directKeys = ["thinking", "analysis", "reasoning"] as const;
+    const directKeys = [
+      "thinking",
+      "analysis",
+      "reasoning",
+      "thinkingText",
+      "analysisText",
+      "reasoningText",
+      "thinking_text",
+      "analysis_text",
+      "reasoning_text",
+      "thinkingDelta",
+      "analysisDelta",
+      "reasoningDelta",
+      "thinking_delta",
+      "analysis_delta",
+      "reasoning_delta",
+    ] as const;
     for (const key of directKeys) {
       const value = record[key];
       if (typeof value === "string") {
@@ -168,7 +184,15 @@ export const extractThinking = (message: unknown): string | null => {
       }
       if (value && typeof value === "object") {
         const nested = value as Record<string, unknown>;
-        const nestedKeys = ["text", "content", "summary", "analysis", "reasoning", "thinking"] as const;
+        const nestedKeys = [
+          "text",
+          "delta",
+          "content",
+          "summary",
+          "analysis",
+          "reasoning",
+          "thinking",
+        ] as const;
         for (const nestedKey of nestedKeys) {
           const nestedValue = nested[nestedKey];
           if (typeof nestedValue === "string") {

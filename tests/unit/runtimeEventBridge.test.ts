@@ -8,6 +8,7 @@ import {
   dedupeRunLines,
   getAgentSummaryPatch,
   getChatSummaryPatch,
+  isReasoningRuntimeAgentStream,
   mergeHistoryWithPending,
   mergeRuntimeStream,
   resolveAssistantCompletionTimestamp,
@@ -22,6 +23,16 @@ describe("runtime event bridge helpers", () => {
     expect(classifyGatewayEventKind("chat")).toBe("runtime-chat");
     expect(classifyGatewayEventKind("agent")).toBe("runtime-agent");
     expect(classifyGatewayEventKind("unknown")).toBe("ignore");
+  });
+
+  it("detects reasoning-like runtime agent streams", () => {
+    expect(isReasoningRuntimeAgentStream("reasoning")).toBe(true);
+    expect(isReasoningRuntimeAgentStream("assistant.reasoning")).toBe(true);
+    expect(isReasoningRuntimeAgentStream("thinking_stream")).toBe(true);
+    expect(isReasoningRuntimeAgentStream("analysis")).toBe(true);
+    expect(isReasoningRuntimeAgentStream("assistant")).toBe(false);
+    expect(isReasoningRuntimeAgentStream("tool")).toBe(false);
+    expect(isReasoningRuntimeAgentStream("lifecycle")).toBe(false);
   });
 
   it("merges assistant stream text deterministically", () => {

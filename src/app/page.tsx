@@ -48,6 +48,7 @@ import {
   dedupeRunLines,
   getAgentSummaryPatch,
   getChatSummaryPatch,
+  isReasoningRuntimeAgentStream,
   mergeRuntimeStream,
   resolveAssistantCompletionTimestamp,
   resolveLifecyclePatch,
@@ -712,7 +713,7 @@ const AgentStudioPage = () => {
   useEffect(() => {
     if (status !== "connected") return;
     if (activeConfigMutation) return;
-    if (deleteAgentBlock) return;
+    if (deleteAgentBlock && deleteAgentBlock.phase !== "queued") return;
     if (hasRunningAgents) return;
     const next = queuedConfigMutations[0];
     if (!next) return;
@@ -1714,6 +1715,23 @@ const AgentStudioPage = () => {
           ? (payload.data as Record<string, unknown>)
           : null;
       const hasChatEvents = chatRunSeenRef.current.has(payload.runId);
+      if (isReasoningRuntimeAgentStream(stream)) {
+        const liveThinking = resolveThinkingFromAgentStream(data, "");
+        if (liveThinking) {
+          dispatch({
+            type: "updateAgent",
+            agentId: match,
+            patch: {
+              status: "running",
+              runId: payload.runId,
+              sessionCreated: true,
+              lastActivityAt: Date.now(),
+              thinkingTrace: liveThinking,
+            },
+          });
+        }
+        return;
+      }
 
       if (stream === "assistant") {
         const rawText = typeof data?.text === "string" ? data.text : "";

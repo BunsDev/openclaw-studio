@@ -43,6 +43,26 @@ describe("extractThinking", () => {
     expect(extractThinking(message)).toBe("Plan A");
   });
 
+  it("extracts reasoning from runtime variant fields", () => {
+    const message = {
+      role: "assistant",
+      reasoningText: "Plan A",
+    };
+
+    expect(extractThinking(message)).toBe("Plan A");
+  });
+
+  it("extracts reasoning from nested runtime deltas", () => {
+    const message = {
+      role: "assistant",
+      reasoning: {
+        delta: "still thinking",
+      },
+    };
+
+    expect(extractThinking(message)).toBe("still thinking");
+  });
+
   it("returns null when no thinking exists", () => {
     const message = {
       role: "assistant",
