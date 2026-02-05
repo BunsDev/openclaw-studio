@@ -4,6 +4,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Cog, Shuffle } from "lucide-react";
 import type { GatewayModelChoice } from "@/lib/gateway/models";
+import { isTraceMarkdown } from "@/lib/text/message-extract";
 import { AgentAvatar } from "./AgentAvatar";
 import { buildAgentChatItems, summarizeToolLabel } from "./chatItems";
 import { EmptyStatePanel } from "./EmptyStatePanel";
@@ -95,6 +96,33 @@ export const AgentChatPanel = ({
       agent.toolCallingEnabled,
     ]
   );
+  const hasLiveAssistantText = Boolean(agent.streamText?.trim());
+  const hasVisibleLiveThinking =
+    agent.showThinkingTraces && Boolean(agent.thinkingTrace?.trim());
+  const hasSavedThinkingSinceLatestUser = useMemo(() => {
+    if (!agent.showThinkingTraces) return false;
+    let latestUserIndex = -1;
+    for (let index = agent.outputLines.length - 1; index >= 0; index -= 1) {
+      const line = agent.outputLines[index]?.trim();
+      if (!line) continue;
+      if (line.startsWith(">")) {
+        latestUserIndex = index;
+        break;
+      }
+    }
+    if (latestUserIndex < 0) return false;
+    for (let index = latestUserIndex + 1; index < agent.outputLines.length; index += 1) {
+      if (isTraceMarkdown(agent.outputLines[index] ?? "")) {
+        return true;
+      }
+    }
+    return false;
+  }, [agent.outputLines, agent.showThinkingTraces]);
+  const showTypingIndicator =
+    agent.status === "running" &&
+    !hasLiveAssistantText &&
+    !hasVisibleLiveThinking &&
+    !hasSavedThinkingSinceLatestUser;
 
   const modelOptions = useMemo(
     () =>
@@ -295,6 +323,29 @@ export const AgentChatPanel = ({
                     </div>
                   );
                 })}
+                {showTypingIndicator ? (
+                  <div
+                    className="flex items-center gap-2 rounded-md border border-border/70 bg-muted/55 px-2 py-1.5 text-[11px] text-muted-foreground"
+                    role="status"
+                    aria-live="polite"
+                    data-testid="agent-typing-indicator"
+                  >
+                    <AgentAvatar
+                      seed={avatarSeed}
+                      name={agent.name}
+                      avatarUrl={agent.avatarUrl ?? null}
+                      size={22}
+                    />
+                    <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.11em]">
+                      Responding
+                    </span>
+                    <span className="typing-dots" aria-hidden="true">
+                      <span />
+                      <span />
+                      <span />
+                    </span>
+                  </div>
+                ) : null}
               </>
             )}
           </div>

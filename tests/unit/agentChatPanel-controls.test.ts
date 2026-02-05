@@ -4,6 +4,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import type { AgentState } from "@/features/agents/state/store";
 import { AgentChatPanel } from "@/features/agents/components/AgentChatPanel";
 import type { GatewayModelChoice } from "@/lib/gateway/models";
+import { formatThinkingMarkdown } from "@/lib/text/message-extract";
 
 const createAgent = (): AgentState => ({
   agentId: "agent-1",
@@ -168,5 +169,78 @@ describe("AgentChatPanel controls", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Stop" }));
     expect(onStopRun).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows_typing_indicator_while_running_before_stream_text", () => {
+    render(
+      createElement(AgentChatPanel, {
+        agent: { ...createAgent(), status: "running", outputLines: ["> test"] },
+        isSelected: true,
+        canSend: true,
+        models,
+        stopBusy: false,
+        onOpenSettings: vi.fn(),
+        onModelChange: vi.fn(),
+        onThinkingChange: vi.fn(),
+        onDraftChange: vi.fn(),
+        onSend: vi.fn(),
+        onStopRun: vi.fn(),
+        onAvatarShuffle: vi.fn(),
+      })
+    );
+
+    expect(screen.getByTestId("agent-typing-indicator")).toBeInTheDocument();
+    expect(screen.getByText("Responding")).toBeInTheDocument();
+  });
+
+  it("hides_typing_indicator_after_stream_starts", () => {
+    render(
+      createElement(AgentChatPanel, {
+        agent: {
+          ...createAgent(),
+          status: "running",
+          outputLines: ["> test"],
+          streamText: "working on it",
+        },
+        isSelected: true,
+        canSend: true,
+        models,
+        stopBusy: false,
+        onOpenSettings: vi.fn(),
+        onModelChange: vi.fn(),
+        onThinkingChange: vi.fn(),
+        onDraftChange: vi.fn(),
+        onSend: vi.fn(),
+        onStopRun: vi.fn(),
+        onAvatarShuffle: vi.fn(),
+      })
+    );
+
+    expect(screen.queryByTestId("agent-typing-indicator")).not.toBeInTheDocument();
+  });
+
+  it("hides_typing_indicator_when_thinking_trace_has_started", () => {
+    render(
+      createElement(AgentChatPanel, {
+        agent: {
+          ...createAgent(),
+          status: "running",
+          outputLines: ["> test", formatThinkingMarkdown("thinking now")],
+        },
+        isSelected: true,
+        canSend: true,
+        models,
+        stopBusy: false,
+        onOpenSettings: vi.fn(),
+        onModelChange: vi.fn(),
+        onThinkingChange: vi.fn(),
+        onDraftChange: vi.fn(),
+        onSend: vi.fn(),
+        onStopRun: vi.fn(),
+        onAvatarShuffle: vi.fn(),
+      })
+    );
+
+    expect(screen.queryByTestId("agent-typing-indicator")).not.toBeInTheDocument();
   });
 });
