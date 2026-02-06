@@ -27,7 +27,7 @@ export function TaskBoard({ snapshot }: TaskBoardProps) {
           </p>
         ) : null}
         {snapshot.warnings.length > 0 ? (
-          <p className="mt-1 text-xs text-amber-800 dark:text-amber-300">
+          <p className="mt-1 text-xs text-accent-foreground">
             Warnings: {snapshot.warnings.join(" | ")}
           </p>
         ) : null}

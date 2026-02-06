@@ -42,7 +42,7 @@ export function TaskColumn({ title, cards, dataTestId }: TaskColumnProps) {
                   </span>
                 ) : null}
                 {card.decisionNeeded ? (
-                  <span className="rounded-full border border-amber-500/45 bg-amber-500/12 px-2 py-0.5 text-[11px] font-semibold text-amber-800 dark:text-amber-300">
+                  <span className="rounded-full border border-accent/45 bg-accent/12 px-2 py-0.5 text-[11px] font-semibold text-accent-foreground">
                     Decision Needed
                   </span>
                 ) : null}
