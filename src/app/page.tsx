@@ -91,6 +91,7 @@ import {
   syncGatewaySessionSettings,
 } from "@/lib/gateway/GatewayClient";
 import { fetchJson } from "@/lib/http";
+import { bootstrapAgentBrainFilesFromTemplate } from "@/lib/gateway/agentFilesBootstrap";
 
 type ChatHistoryMessage = Record<string, unknown>;
 
@@ -152,7 +153,7 @@ type DeleteAgentBlockState = {
   startedAt: number;
   sawDisconnect: boolean;
 };
-type CreateAgentBlockPhase = "queued" | "creating" | "awaiting-restart";
+type CreateAgentBlockPhase = "queued" | "creating" | "awaiting-restart" | "bootstrapping-files";
 type CreateAgentBlockState = {
   agentId: string | null;
   agentName: string;
@@ -1560,22 +1561,37 @@ const AgentStudioPage = () => {
       }
       return;
     }
-    if (!createAgentBlock.sawDisconnect) return;
-    let cancelled = false;
-    const finalize = async () => {
-      await loadAgents();
-      if (cancelled) return;
-      if (createAgentBlock.agentId) {
-        dispatch({ type: "selectAgent", agentId: createAgentBlock.agentId });
-      }
-      setCreateAgentBlock(null);
-      setMobilePane("chat");
-    };
-    void finalize();
-    return () => {
-      cancelled = true;
-    };
-  }, [createAgentBlock, dispatch, loadAgents, status]);
+	    if (!createAgentBlock.sawDisconnect) return;
+	    let cancelled = false;
+	    const finalize = async () => {
+	      await loadAgents();
+	      if (cancelled) return;
+	      const newAgentId = createAgentBlock.agentId?.trim() ?? "";
+	      if (newAgentId) {
+	        dispatch({ type: "selectAgent", agentId: newAgentId });
+	        setCreateAgentBlock((current) => {
+	          if (!current || current.agentId !== newAgentId) return current;
+	          return { ...current, phase: "bootstrapping-files" };
+	        });
+	        try {
+	          await bootstrapAgentBrainFilesFromTemplate({ client, agentId: newAgentId });
+	        } catch (err) {
+	          const message =
+	            err instanceof Error
+	              ? err.message
+	              : "Failed to bootstrap brain files for the new agent.";
+	          console.error(message, err);
+	          setError(message);
+	        }
+	      }
+	      setCreateAgentBlock(null);
+	      setMobilePane("chat");
+	    };
+	    void finalize();
+	    return () => {
+	      cancelled = true;
+	    };
+	  }, [client, createAgentBlock, dispatch, loadAgents, setError, status]);
 
   useEffect(() => {
     if (!createAgentBlock) return;
@@ -2363,6 +2379,8 @@ const AgentStudioPage = () => {
       ? "Waiting for active runs to finish"
       : createAgentBlock.phase === "creating"
       ? "Submitting config change"
+      : createAgentBlock.phase === "bootstrapping-files"
+        ? "Bootstrapping brain files"
       : !createAgentBlock.sawDisconnect
         ? "Waiting for gateway to restart"
         : status === "connected"
