@@ -1,32 +1,10 @@
 import { AGENT_FILE_NAMES, type AgentFileName } from "@/lib/agents/agentFiles";
+import { readGatewayAgentFile, writeGatewayAgentFile } from "@/lib/gateway/agentFiles";
 import type { GatewayClient } from "@/lib/gateway/GatewayClient";
-
-type AgentsFilesGetResponse = {
-  file?: { name?: unknown; missing?: unknown; content?: unknown };
-};
 
 type AgentsListResult = {
   defaultId: string;
   agents: Array<{ id: string }>;
-};
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  Boolean(value && typeof value === "object" && !Array.isArray(value));
-
-const readAgentsFilesGet = async (params: {
-  client: GatewayClient;
-  agentId: string;
-  name: AgentFileName;
-}): Promise<{ exists: boolean; content: string }> => {
-  const response = await params.client.call<AgentsFilesGetResponse>("agents.files.get", {
-    agentId: params.agentId,
-    name: params.name,
-  });
-  const file = response?.file;
-  const fileRecord = isRecord(file) ? file : null;
-  const missing = fileRecord?.missing === true;
-  const content = typeof fileRecord?.content === "string" ? fileRecord.content : "";
-  return { exists: !missing, content };
 };
 
 const resolveTemplateAgentId = async (params: {
@@ -74,8 +52,8 @@ export const bootstrapAgentBrainFilesFromTemplate = async (params: {
   const reads = await Promise.all(
     resolvedNames.map(async (name) => {
       const [target, template] = await Promise.all([
-        readAgentsFilesGet({ client: params.client, agentId: targetAgentId, name }),
-        readAgentsFilesGet({ client: params.client, agentId: templateAgentId, name }),
+        readGatewayAgentFile({ client: params.client, agentId: targetAgentId, name }),
+        readGatewayAgentFile({ client: params.client, agentId: templateAgentId, name }),
       ]);
       return { name, target, template };
     })
@@ -100,7 +78,8 @@ export const bootstrapAgentBrainFilesFromTemplate = async (params: {
 
   await Promise.all(
     toUpdate.map(async (entry) => {
-      await params.client.call("agents.files.set", {
+      await writeGatewayAgentFile({
+        client: params.client,
         agentId: targetAgentId,
         name: entry.name,
         content: entry.content,
@@ -114,4 +93,3 @@ export const bootstrapAgentBrainFilesFromTemplate = async (params: {
     skipped,
   };
 };
-
