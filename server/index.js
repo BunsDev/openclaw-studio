@@ -29,7 +29,12 @@ async function main() {
   const hostname = resolveHost();
   const port = resolvePort();
 
-  const app = next({ dev, hostname, port });
+  const app = next({
+    dev,
+    hostname,
+    port,
+    ...(dev ? { webpack: true } : null),
+  });
   const handle = app.getRequestHandler();
 
   const accessGate = createAccessGate({
