@@ -128,7 +128,7 @@ const ThinkingDetailsRow = memo(function ThinkingDetailsRow({
 }) {
   if (!thinkingText.trim()) return null;
   return (
-    <details className="group rounded-[8px] bg-muted px-2 py-1.5 text-[10px] text-muted-foreground/80">
+    <details className="group rounded-[8px] border border-border/70 bg-surface-2 px-2 py-1.5 text-[10px] text-muted-foreground/80">
       <summary className="flex cursor-pointer list-none items-center gap-2 opacity-65 [&::-webkit-details-marker]:hidden">
         <ChevronRight className="h-3 w-3 shrink-0 transition group-open:rotate-90" />
         <span className="flex min-w-0 items-center gap-2">
@@ -165,13 +165,13 @@ const UserMessageCard = memo(function UserMessageCard({
   timestampMs?: number;
 }) {
   return (
-    <div className="w-full max-w-[70ch] self-end overflow-hidden rounded-[8px] bg-primary/10">
-      <div className="flex items-center justify-between gap-3 bg-primary/15 px-3 py-2">
+    <div className="w-full max-w-[70ch] self-end overflow-hidden rounded-[8px] border border-primary/25 bg-primary/12">
+      <div className="flex items-center justify-between gap-3 bg-primary/18 px-3 py-2">
         <div className="min-w-0 truncate font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-foreground/90">
           You
         </div>
         {typeof timestampMs === "number" ? (
-          <time className="shrink-0 rounded-full bg-card/60 px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/90">
+          <time className="shrink-0 rounded-full bg-surface-3 px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/90">
             {formatChatTimestamp(timestampMs)}
           </time>
         ) : null}
@@ -223,7 +223,7 @@ const AssistantMessageCard = memo(function AssistantMessageCard({
             {name}
           </div>
           {resolvedTimestamp !== null ? (
-            <time className="shrink-0 rounded-full bg-card/60 px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/90">
+            <time className="shrink-0 rounded-full bg-surface-3 px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/90">
               {formatChatTimestamp(resolvedTimestamp)}
             </time>
           ) : null}
@@ -231,7 +231,7 @@ const AssistantMessageCard = memo(function AssistantMessageCard({
 
         {compactStreamingIndicator ? (
           <div
-            className="mt-2 inline-flex items-center gap-2 rounded-[8px] bg-background px-3 py-2 text-[10px] text-muted-foreground/80"
+            className="mt-2 inline-flex items-center gap-2 rounded-[8px] border border-border/70 bg-surface-3 px-3 py-2 text-[10px] text-muted-foreground/80"
             role="status"
             aria-live="polite"
             data-testid="agent-typing-indicator"
@@ -283,14 +283,14 @@ const AssistantMessageCard = memo(function AssistantMessageCard({
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>{intro}</ReactMarkdown>
                     </div>
                   ) : null}
-                  <div className="group rounded-[8px] bg-background px-3 py-2">
+                  <div className="group rounded-[8px] border border-border/70 bg-surface-3 px-3 py-2">
                     <div className="flex items-center justify-between gap-3 pb-2">
                       <div className="min-w-0 truncate font-mono text-[9px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/80">
                         Output
                       </div>
                       <button
                         type="button"
-                        className="rounded-[8px] bg-card/60 p-1.5 text-muted-foreground opacity-0 transition hover:bg-card group-hover:opacity-100"
+                        className="rounded-[8px] bg-surface-1 p-1.5 text-muted-foreground opacity-0 transition hover:bg-surface-2 group-hover:opacity-100"
                         aria-label="Extract output"
                         title="Copy output"
                         onClick={() => {
@@ -404,7 +404,7 @@ const AgentChatFinalItems = memo(function AgentChatFinalItems({
           return (
             <details
               key={`chat-${agentId}-tool-${index}`}
-              className={`w-full ${ASSISTANT_MAX_WIDTH_EXPANDED_CLASS} ${ASSISTANT_GUTTER_CLASS} self-start rounded-[8px] bg-background px-2 py-1 text-[10px] text-muted-foreground`}
+              className={`w-full ${ASSISTANT_MAX_WIDTH_EXPANDED_CLASS} ${ASSISTANT_GUTTER_CLASS} self-start rounded-[8px] border border-border/70 bg-surface-3 px-2 py-1 text-[10px] text-muted-foreground`}
             >
                 <summary className="cursor-pointer select-none font-mono text-[10px] font-semibold uppercase tracking-[0.11em]">
                   {summaryText}
@@ -594,14 +594,14 @@ const AgentChatTranscript = memo(function AgentChatTranscript({
         <div className="relative flex flex-col gap-4 text-xs text-foreground">
           <div aria-hidden className={`pointer-events-none absolute ${SPINE_LEFT} top-0 bottom-0 w-px bg-border/20`} />
           {historyMaybeTruncated && isAtTop ? (
-            <div className="-mx-1 flex items-center justify-between gap-3 rounded-[10px] border border-border/60 bg-card/85 px-3 py-2 backdrop-blur">
+            <div className="-mx-1 flex items-center justify-between gap-3 rounded-[10px] border border-border/70 bg-surface-2 px-3 py-2">
               <div className="min-w-0 truncate font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
                 Showing most recent {typeof historyFetchedCount === "number" ? historyFetchedCount : "?"} messages
                 {typeof historyFetchLimit === "number" ? ` (limit ${historyFetchLimit})` : ""}
               </div>
               <button
                 type="button"
-                className="shrink-0 rounded-[8px] border border-border/60 bg-background px-3 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-foreground transition hover:bg-muted"
+                className="shrink-0 rounded-[8px] border border-border/70 bg-surface-3 px-3 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-foreground transition hover:bg-surface-2"
                 onClick={onLoadMoreHistory}
               >
                 Load more
@@ -647,7 +647,7 @@ const AgentChatTranscript = memo(function AgentChatTranscript({
       {showJumpToLatest ? (
         <button
           type="button"
-          className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-[8px] border border-border/60 bg-card px-3 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-foreground transition hover:bg-muted"
+          className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-[8px] border border-border/70 bg-surface-2 px-3 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-foreground transition hover:bg-surface-3"
           onClick={() => {
             setPinned(true);
             scrollChatToBottom();
@@ -690,14 +690,14 @@ const AgentChatComposer = memo(function AgentChatComposer({
         ref={inputRef}
         rows={1}
         value={value}
-        className="flex-1 resize-none rounded-[8px] border border-border/60 bg-background px-3 py-2 text-[11px] text-foreground outline-none transition focus:border-ring"
+        className="flex-1 resize-none rounded-[8px] border border-border/70 bg-surface-3 px-3 py-2 text-[11px] text-foreground outline-none transition"
         onChange={onChange}
         onKeyDown={onKeyDown}
         placeholder="type a message"
       />
       {running ? (
         <button
-          className="rounded-[8px] border border-border/60 bg-background px-3 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+          className="rounded-[8px] border border-border/70 bg-surface-3 px-3 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-foreground transition hover:bg-surface-2 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
           type="button"
           onClick={onStop}
           disabled={!canSend || stopBusy}
@@ -706,7 +706,7 @@ const AgentChatComposer = memo(function AgentChatComposer({
         </button>
       ) : null}
       <button
-        className="rounded-[8px] border border-transparent bg-primary px-3 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-primary-foreground transition hover:brightness-110 disabled:cursor-not-allowed disabled:border-border disabled:bg-muted disabled:text-muted-foreground"
+        className="rounded-[8px] border border-transparent bg-primary px-3 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-primary-foreground transition hover:brightness-105 disabled:cursor-not-allowed disabled:border-border disabled:bg-muted disabled:text-muted-foreground"
         type="button"
         onClick={onSend}
         disabled={sendDisabled}
@@ -904,7 +904,7 @@ export const AgentChatPanel = ({
                 isSelected={isSelected}
               />
               <button
-                className="nodrag pointer-events-none absolute bottom-1 right-1 flex h-7 w-7 items-center justify-center rounded-full border border-border/80 bg-card/90 text-muted-foreground opacity-0 transition group-focus-within/avatar:pointer-events-auto group-focus-within/avatar:opacity-100 group-hover/avatar:pointer-events-auto group-hover/avatar:opacity-100 hover:border-border hover:bg-muted/65"
+                className="nodrag pointer-events-none absolute bottom-1 right-1 flex h-7 w-7 items-center justify-center rounded-full border border-border/80 bg-surface-3 text-muted-foreground opacity-0 transition group-focus-within/avatar:pointer-events-auto group-focus-within/avatar:opacity-100 group-hover/avatar:pointer-events-auto group-hover/avatar:opacity-100 hover:border-border hover:bg-surface-2"
                 type="button"
                 aria-label="Shuffle avatar"
                 data-testid="agent-avatar-shuffle"
@@ -937,7 +937,7 @@ export const AgentChatPanel = ({
                 <label className="flex min-w-0 flex-col gap-1 font-mono text-[9px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
                   <span>Model</span>
                   <select
-                    className="h-8 w-full min-w-0 overflow-hidden text-ellipsis whitespace-nowrap rounded-md border border-border bg-card/75 px-2 text-[11px] font-semibold text-foreground"
+                    className="h-8 w-full min-w-0 overflow-hidden text-ellipsis whitespace-nowrap rounded-md border border-border bg-surface-3 px-2 text-[11px] font-semibold text-foreground"
                     aria-label="Model"
                     value={modelValue}
                     onChange={(event) => {
@@ -959,7 +959,7 @@ export const AgentChatPanel = ({
                   <label className="flex flex-col gap-1 font-mono text-[9px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
                     <span>Thinking</span>
                     <select
-                      className="h-8 rounded-md border border-border bg-card/75 px-2 text-[11px] font-semibold text-foreground"
+                      className="h-8 rounded-md border border-border bg-surface-3 px-2 text-[11px] font-semibold text-foreground"
                       aria-label="Thinking"
                       value={agent.thinkingLevel ?? ""}
                       onChange={(event) => {
@@ -984,7 +984,7 @@ export const AgentChatPanel = ({
           </div>
 
           <button
-            className="nodrag mt-0.5 flex h-9 w-9 items-center justify-center rounded-md border border-border/80 bg-card/60 text-muted-foreground transition hover:border-border hover:bg-muted/65"
+            className="nodrag mt-0.5 flex h-9 w-9 items-center justify-center rounded-md border border-border/80 bg-surface-3 text-muted-foreground transition hover:border-border hover:bg-surface-2"
             type="button"
             data-testid="agent-settings-toggle"
             aria-label="Open agent settings"
@@ -1018,7 +1018,7 @@ export const AgentChatPanel = ({
           scrollToBottomNextOutputRef={scrollToBottomNextOutputRef}
         />
 
-        <div className="mt-3 border-t border-border/40 pt-3">
+        <div className="mt-3 border-t border-border/60 pt-3">
           <AgentChatComposer
             value={draftValue}
             inputRef={handleDraftRef}

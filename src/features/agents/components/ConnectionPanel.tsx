@@ -50,7 +50,7 @@ export const ConnectionPanel = ({
           {statusConfig.label}
         </span>
         <button
-          className="rounded-md border border-input/90 bg-background/70 px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-foreground transition hover:border-border hover:bg-muted/65 disabled:cursor-not-allowed disabled:opacity-60"
+          className="rounded-md border border-input/90 bg-surface-3 px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-foreground transition hover:border-border hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-60"
           type="button"
           onClick={isConnected ? onDisconnect : onConnect}
           disabled={isConnecting || !gatewayUrl.trim()}
@@ -62,7 +62,7 @@ export const ConnectionPanel = ({
         <label className="flex flex-col gap-1 font-mono text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">
           Upstream Gateway URL
           <input
-            className="h-10 rounded-md border border-input bg-background/75 px-4 font-sans text-sm text-foreground outline-none transition focus:border-ring"
+            className="h-10 rounded-md border border-input bg-surface-3 px-4 font-sans text-sm text-foreground outline-none transition"
             type="text"
             value={gatewayUrl}
             onChange={(event) => onGatewayUrlChange(event.target.value)}
@@ -73,7 +73,7 @@ export const ConnectionPanel = ({
         <label className="flex flex-col gap-1 font-mono text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">
           Upstream Token
           <input
-            className="h-10 rounded-md border border-input bg-background/75 px-4 font-sans text-sm text-foreground outline-none transition focus:border-ring"
+            className="h-10 rounded-md border border-input bg-surface-3 px-4 font-sans text-sm text-foreground outline-none transition"
             type="password"
             value={token}
             onChange={(event) => onTokenChange(event.target.value)}

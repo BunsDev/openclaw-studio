@@ -1827,7 +1827,7 @@ const AgentStudioPage = () => {
           </div>
         </div>
       ) : null}
-      <div className="relative z-10 flex h-screen flex-col gap-4 px-3 py-3 sm:px-4 sm:py-4 md:px-6 md:py-6">
+      <div className="relative z-10 flex h-screen flex-col gap-3 px-3 py-3 sm:px-4 sm:py-4 md:px-5 md:py-5">
         <div className="w-full">
           <HeaderBar
             status={status}
@@ -1865,21 +1865,21 @@ const AgentStudioPage = () => {
         ) : null}
         {configMutationStatusLine ? (
           <div className="w-full">
-            <div className="rounded-md border border-border/80 bg-card/80 px-4 py-2 font-mono text-[11px] uppercase tracking-[0.11em] text-muted-foreground">
+            <div className="rounded-md border border-border/80 bg-surface-2 px-4 py-2 font-mono text-[11px] uppercase tracking-[0.11em] text-muted-foreground">
               {configMutationStatusLine}
             </div>
           </div>
         ) : null}
 
         <div className="flex min-h-0 flex-1 flex-col gap-4 xl:flex-row">
-          <div className="glass-panel p-2 xl:hidden" data-testid="mobile-pane-toggle">
+          <div className="glass-panel bg-surface-1 p-2 xl:hidden" data-testid="mobile-pane-toggle">
             <div className="grid grid-cols-4 gap-2">
               <button
                 type="button"
                 className={`rounded-md border px-2 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.13em] transition ${
                   mobilePane === "fleet"
-                    ? "border-border bg-muted text-foreground shadow-xs"
-                    : "border-border/80 bg-card/65 text-muted-foreground hover:border-border hover:bg-muted/70"
+                    ? "border-border bg-surface-2 text-foreground"
+                    : "border-border/80 bg-surface-1 text-muted-foreground hover:border-border hover:bg-surface-2"
                 }`}
                 onClick={() => setMobilePane("fleet")}
               >
@@ -1889,8 +1889,8 @@ const AgentStudioPage = () => {
                 type="button"
                 className={`rounded-md border px-2 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.13em] transition ${
                   mobilePane === "chat"
-                    ? "border-border bg-muted text-foreground shadow-xs"
-                    : "border-border/80 bg-card/65 text-muted-foreground hover:border-border hover:bg-muted/70"
+                    ? "border-border bg-surface-2 text-foreground"
+                    : "border-border/80 bg-surface-1 text-muted-foreground hover:border-border hover:bg-surface-2"
                 }`}
                 onClick={() => setMobilePane("chat")}
               >
@@ -1900,8 +1900,8 @@ const AgentStudioPage = () => {
                 type="button"
                 className={`rounded-md border px-2 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.13em] transition ${
                   mobilePane === "settings"
-                    ? "border-border bg-muted text-foreground shadow-xs"
-                    : "border-border/80 bg-card/65 text-muted-foreground hover:border-border hover:bg-muted/70"
+                    ? "border-border bg-surface-2 text-foreground"
+                    : "border-border/80 bg-surface-1 text-muted-foreground hover:border-border hover:bg-surface-2"
                 }`}
                 onClick={() => setMobilePane("settings")}
                 disabled={!settingsAgent}
@@ -1912,8 +1912,8 @@ const AgentStudioPage = () => {
                 type="button"
                 className={`rounded-md border px-2 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.13em] transition ${
                   mobilePane === "brain"
-                    ? "border-border bg-muted text-foreground shadow-xs"
-                    : "border-border/80 bg-card/65 text-muted-foreground hover:border-border hover:bg-muted/70"
+                    ? "border-border bg-surface-2 text-foreground"
+                    : "border-border/80 bg-surface-1 text-muted-foreground hover:border-border hover:bg-surface-2"
                 }`}
                 onClick={() => {
                   setBrainPanelOpen(true);
@@ -1947,7 +1947,7 @@ const AgentStudioPage = () => {
             />
           </div>
           <div
-            className={`${mobilePane === "chat" ? "flex" : "hidden"} min-h-0 flex-1 overflow-hidden rounded-[16px] bg-card shadow-[0_8px_24px_rgba(0,0,0,0.06)] xl:flex`}
+            className={`${mobilePane === "chat" ? "flex" : "hidden"} min-h-0 flex-1 overflow-hidden rounded-md border border-border/80 bg-surface-1 xl:flex`}
             data-testid="focused-agent-panel"
           >
             {focusedAgent ? (
@@ -1989,7 +1989,7 @@ const AgentStudioPage = () => {
           </div>
           {brainPanelOpen ? (
             <div
-              className={`${mobilePane === "brain" ? "block" : "hidden"} glass-panel min-h-0 w-full shrink-0 overflow-hidden p-0 xl:block xl:min-w-[360px] xl:max-w-[430px]`}
+              className={`${mobilePane === "brain" ? "block" : "hidden"} glass-panel min-h-0 w-full shrink-0 overflow-hidden p-0 xl:block xl:min-w-[360px] xl:max-w-[430px] xl:border-l xl:border-border/70`}
             >
               <AgentBrainPanel
                 client={client}
@@ -2004,7 +2004,7 @@ const AgentStudioPage = () => {
           ) : null}
           {settingsAgent ? (
             <div
-              className={`${mobilePane === "settings" ? "block" : "hidden"} glass-panel min-h-0 w-full shrink-0 overflow-hidden p-0 xl:block xl:min-w-[360px] xl:max-w-[430px]`}
+              className={`${mobilePane === "settings" ? "block" : "hidden"} glass-panel min-h-0 w-full shrink-0 overflow-hidden p-0 xl:block xl:min-w-[360px] xl:max-w-[430px] xl:border-l xl:border-border/70`}
             >
               <AgentSettingsPanel
                 key={settingsAgent.agentId}
@@ -2050,13 +2050,13 @@ const AgentStudioPage = () => {
       </div>
       {createAgentBlock && createAgentBlock.phase !== "queued" ? (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-background/70 backdrop-blur-sm"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-background/80"
           data-testid="agent-create-restart-modal"
           role="dialog"
           aria-modal="true"
           aria-label="Creating agent and restarting gateway"
         >
-          <div className="w-full max-w-md rounded-lg border border-border bg-card/95 p-6 shadow-2xl">
+          <div className="w-full max-w-md rounded-lg border border-border bg-card p-6">
             <div className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
               Agent create in progress
             </div>
@@ -2076,13 +2076,13 @@ const AgentStudioPage = () => {
       ) : null}
       {renameAgentBlock && renameAgentBlock.phase !== "queued" ? (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-background/70 backdrop-blur-sm"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-background/80"
           data-testid="agent-rename-restart-modal"
           role="dialog"
           aria-modal="true"
           aria-label="Renaming agent and restarting gateway"
         >
-          <div className="w-full max-w-md rounded-lg border border-border bg-card/95 p-6 shadow-2xl">
+          <div className="w-full max-w-md rounded-lg border border-border bg-card p-6">
             <div className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
               Agent rename in progress
             </div>
@@ -2102,13 +2102,13 @@ const AgentStudioPage = () => {
       ) : null}
       {deleteAgentBlock && deleteAgentBlock.phase !== "queued" ? (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-background/70 backdrop-blur-sm"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-background/80"
           data-testid="agent-delete-restart-modal"
           role="dialog"
           aria-modal="true"
           aria-label="Deleting agent and restarting gateway"
         >
-          <div className="w-full max-w-md rounded-lg border border-border bg-card/95 p-6 shadow-2xl">
+          <div className="w-full max-w-md rounded-lg border border-border bg-card p-6">
             <div className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
               Agent delete in progress
             </div>

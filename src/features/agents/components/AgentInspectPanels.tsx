@@ -42,7 +42,7 @@ const AgentInspectHeader = ({
         <div className="console-title text-2xl leading-none text-foreground">{title}</div>
       </div>
       <button
-        className="rounded-md border border-border/80 bg-card/70 px-3 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground transition hover:border-border hover:bg-muted/65"
+        className="rounded-md border border-border/80 bg-surface-3 px-3 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground transition hover:border-border hover:bg-surface-2"
         type="button"
         data-testid={closeTestId}
         disabled={closeDisabled}
@@ -417,9 +417,9 @@ export const AgentSettingsPanel = ({
         closeTestId="agent-settings-close"
       />
 
-      <div className="flex flex-col gap-4 p-4">
+      <div className="flex flex-col gap-0 px-4 pb-4">
         <section
-          className="rounded-md border border-border/80 bg-card/70 p-4"
+          className="border-t border-border/60 py-4 first:border-t-0"
           data-testid="agent-settings-identity"
         >
           <div className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
@@ -429,7 +429,7 @@ export const AgentSettingsPanel = ({
             <span>Agent name</span>
             <input
               aria-label="Agent name"
-              className="h-10 rounded-md border border-border bg-card/75 px-3 text-xs font-semibold text-foreground outline-none"
+              className="h-10 rounded-md border border-border bg-surface-3 px-3 text-xs font-semibold text-foreground outline-none"
               value={nameDraft}
               disabled={renameSaving}
               onChange={(event) => setNameDraft(event.target.value)}
@@ -442,7 +442,7 @@ export const AgentSettingsPanel = ({
           ) : null}
           <div className="mt-3 flex justify-end">
             <button
-              className="rounded-md border border-transparent bg-primary/90 px-4 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-primary-foreground disabled:cursor-not-allowed disabled:border-border disabled:bg-muted disabled:text-muted-foreground"
+              className="rounded-md border border-transparent bg-primary px-4 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-primary-foreground transition hover:brightness-105 disabled:cursor-not-allowed disabled:border-border disabled:bg-muted disabled:text-muted-foreground"
               type="button"
               onClick={() => {
                 void handleRename();
@@ -455,14 +455,14 @@ export const AgentSettingsPanel = ({
         </section>
 
         <section
-          className="rounded-md border border-border/80 bg-card/70 p-4"
+          className="border-t border-border/60 py-4 first:border-t-0"
           data-testid="agent-settings-display"
         >
           <div className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
             Display
           </div>
           <div className="mt-3 grid gap-3 md:grid-cols-2">
-            <label className="flex items-center justify-between gap-3 rounded-md border border-border/80 bg-card/75 px-3 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+            <label className="flex items-center justify-between gap-3 rounded-md border border-border/80 bg-surface-3 px-3 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
               <span>Show tool calls</span>
               <input
                 aria-label="Show tool calls"
@@ -472,7 +472,7 @@ export const AgentSettingsPanel = ({
                 onChange={(event) => onToolCallingToggle(event.target.checked)}
               />
             </label>
-            <label className="flex items-center justify-between gap-3 rounded-md border border-border/80 bg-card/75 px-3 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+            <label className="flex items-center justify-between gap-3 rounded-md border border-border/80 bg-surface-3 px-3 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
               <span>Show thinking</span>
               <input
                 aria-label="Show thinking"
@@ -486,7 +486,7 @@ export const AgentSettingsPanel = ({
         </section>
 
         <section
-          className="rounded-md border border-border/80 bg-card/70 p-4"
+          className="border-t border-border/60 py-4 first:border-t-0"
           data-testid="agent-settings-session"
         >
           <div className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
@@ -496,7 +496,7 @@ export const AgentSettingsPanel = ({
             Start this agent in a fresh session and clear the visible transcript in Studio.
           </div>
           <button
-            className="mt-3 w-full rounded-md border border-border/80 bg-card/75 px-3 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-foreground transition hover:border-border hover:bg-muted/70 disabled:cursor-not-allowed disabled:opacity-70"
+            className="mt-3 w-full rounded-md border border-border/80 bg-surface-3 px-3 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-foreground transition hover:border-border hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-70"
             type="button"
             onClick={() => {
               void handleNewSession();
@@ -508,7 +508,7 @@ export const AgentSettingsPanel = ({
         </section>
 
         <section
-          className="rounded-md border border-border/80 bg-card/70 p-4"
+          className="border-t border-border/60 py-4 first:border-t-0"
           data-testid="agent-settings-cron"
         >
           <div className="flex items-center justify-between gap-2">
@@ -517,7 +517,7 @@ export const AgentSettingsPanel = ({
             </div>
             {!cronLoading && !cronError && cronJobs.length > 0 ? (
               <button
-                className="rounded-md border border-border/80 bg-card/75 px-2.5 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-foreground transition hover:border-border hover:bg-muted/70 disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-md border border-border/80 bg-surface-3 px-2.5 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-foreground transition hover:border-border hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-60"
                 type="button"
                 onClick={openCronCreate}
               >
@@ -539,7 +539,7 @@ export const AgentSettingsPanel = ({
                 No cron jobs for this agent.
               </div>
               <button
-                className="mt-3 w-full rounded-md border border-border/80 bg-card/75 px-3 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-foreground transition hover:border-border hover:bg-muted/70 disabled:cursor-not-allowed disabled:opacity-60"
+                className="mt-3 w-full rounded-md border border-border/80 bg-surface-3 px-3 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-foreground transition hover:border-border hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-60"
                 type="button"
                 onClick={openCronCreate}
               >
@@ -563,7 +563,7 @@ export const AgentSettingsPanel = ({
                 return (
                   <div
                     key={job.id}
-                    className="group/cron flex items-start justify-between gap-2 rounded-md border border-border/80 bg-card/75 px-3 py-2"
+                    className="group/cron flex items-start justify-between gap-2 rounded-md border border-border/80 bg-surface-2 px-3 py-2"
                   >
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -595,7 +595,7 @@ export const AgentSettingsPanel = ({
                             </span>
                             {payloadExpandable ? (
                               <button
-                                className="shrink-0 rounded-md border border-border/80 bg-card/70 px-2 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-[0.12em] text-muted-foreground transition hover:border-border hover:bg-muted/65"
+                                className="shrink-0 rounded-md border border-border/80 bg-surface-3 px-2 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-[0.12em] text-muted-foreground transition hover:border-border hover:bg-surface-2"
                                 type="button"
                                 onClick={() => {
                                   setExpandedCronJobIds((prev) => {
@@ -621,7 +621,7 @@ export const AgentSettingsPanel = ({
                     </div>
                     <div className="flex items-center gap-1 opacity-0 transition group-focus-within/cron:opacity-100 group-hover/cron:opacity-100">
                       <button
-                        className="flex h-7 w-7 items-center justify-center rounded-md border border-border/80 bg-card/70 text-muted-foreground transition hover:border-border hover:bg-muted/65 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="flex h-7 w-7 items-center justify-center rounded-md border border-border/80 bg-surface-3 text-muted-foreground transition hover:border-border hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-60"
                         type="button"
                         aria-label={`Run cron job ${job.name} now`}
                         onClick={() => {
@@ -651,7 +651,7 @@ export const AgentSettingsPanel = ({
         </section>
 
         <section
-          className="rounded-md border border-border/80 bg-card/70 p-4"
+          className="border-t border-border/60 py-4 first:border-t-0"
           data-testid="agent-settings-heartbeat"
         >
           <div className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
@@ -680,7 +680,7 @@ export const AgentSettingsPanel = ({
                 return (
                   <div
                     key={heartbeat.id}
-                    className="group/heartbeat flex items-start justify-between gap-2 rounded-md border border-border/80 bg-card/75 px-3 py-2"
+                    className="group/heartbeat flex items-start justify-between gap-2 rounded-md border border-border/80 bg-surface-2 px-3 py-2"
                   >
                     <div className="min-w-0 flex-1">
                       <div className="truncate font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-foreground">
@@ -698,7 +698,7 @@ export const AgentSettingsPanel = ({
                     </div>
                     <div className="flex items-center gap-1 opacity-0 transition group-focus-within/heartbeat:opacity-100 group-hover/heartbeat:opacity-100">
                       <button
-                        className="flex h-7 w-7 items-center justify-center rounded-md border border-border/80 bg-card/70 text-muted-foreground transition hover:border-border hover:bg-muted/65 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="flex h-7 w-7 items-center justify-center rounded-md border border-border/80 bg-surface-3 text-muted-foreground transition hover:border-border hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-60"
                         type="button"
                         aria-label={`Run heartbeat for ${heartbeat.agentId} now`}
                         onClick={() => {
@@ -728,7 +728,7 @@ export const AgentSettingsPanel = ({
         </section>
 
         {canDelete ? (
-          <section className="rounded-md border border-destructive/30 bg-destructive/4 p-4">
+          <section className="border-t border-destructive/35 py-4 first:border-t-0">
             <div className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-destructive">
               Delete agent
             </div>
@@ -736,7 +736,7 @@ export const AgentSettingsPanel = ({
               Removes the agent from the gateway config and deletes its cron jobs.
             </div>
             <button
-              className="mt-3 w-full rounded-md border border-destructive/50 bg-transparent px-3 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-destructive shadow-sm transition hover:bg-destructive/10"
+              className="mt-3 w-full rounded-md border border-destructive/50 bg-transparent px-3 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-destructive transition hover:bg-destructive/10"
               type="button"
               onClick={onDelete}
             >
@@ -744,7 +744,7 @@ export const AgentSettingsPanel = ({
             </button>
           </section>
         ) : (
-          <section className="rounded-md border border-border/80 bg-card/70 p-4">
+          <section className="border-t border-border/60 py-4 first:border-t-0">
             <div className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
               System agent
             </div>
@@ -756,14 +756,14 @@ export const AgentSettingsPanel = ({
       </div>
       {cronCreateOpen ? (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-background/70 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-background/80 p-4"
           role="dialog"
           aria-modal="true"
           aria-label="Create cron job"
           onClick={closeCronCreate}
         >
           <div
-            className="w-full max-w-2xl rounded-xl border border-border bg-card/95 shadow-2xl"
+            className="w-full max-w-2xl rounded-xl border border-border bg-card"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-3 border-b border-border/80 px-4 py-3">
@@ -775,7 +775,7 @@ export const AgentSettingsPanel = ({
               </div>
               <button
                 type="button"
-                className="inline-flex h-9 items-center justify-center rounded-md border border-border/80 bg-card/70 px-3 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground transition hover:border-border hover:bg-muted/65"
+                className="inline-flex h-9 items-center justify-center rounded-md border border-border/80 bg-surface-3 px-3 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground transition hover:border-border hover:bg-surface-2"
                 onClick={closeCronCreate}
               >
                 Close
@@ -804,7 +804,7 @@ export const AgentSettingsPanel = ({
                           className={`rounded-md border px-3 py-3 text-left transition ${
                             active
                               ? `${option.accent} border-border`
-                              : "border-border/80 bg-card/75 hover:border-border hover:bg-muted/60"
+                              : "border-border/80 bg-surface-2 hover:border-border hover:bg-surface-3"
                           }`}
                           onClick={() => selectCronTemplate(option.id)}
                         >
@@ -832,7 +832,7 @@ export const AgentSettingsPanel = ({
                     </span>
                     <input
                       aria-label="Job name"
-                      className="h-10 rounded-md border border-border bg-card/75 px-3 text-sm text-foreground outline-none"
+                      className="h-10 rounded-md border border-border bg-surface-3 px-3 text-sm text-foreground outline-none"
                       value={cronDraft.name}
                       onChange={(event) => updateCronDraft({ name: event.target.value })}
                     />
@@ -843,7 +843,7 @@ export const AgentSettingsPanel = ({
                     </span>
                     <textarea
                       aria-label="Task"
-                      className="min-h-28 rounded-md border border-border bg-card/75 px-3 py-2 text-sm text-foreground outline-none"
+                      className="min-h-28 rounded-md border border-border bg-surface-3 px-3 py-2 text-sm text-foreground outline-none"
                       value={cronDraft.taskText}
                       onChange={(event) => updateCronDraft({ taskText: event.target.value })}
                     />
@@ -858,7 +858,7 @@ export const AgentSettingsPanel = ({
                       Schedule type
                     </span>
                     <select
-                      className="h-10 rounded-md border border-border bg-card/75 px-3 text-sm text-foreground outline-none"
+                      className="h-10 rounded-md border border-border bg-surface-3 px-3 text-sm text-foreground outline-none"
                       value={cronDraft.scheduleKind}
                       onChange={(event) =>
                         updateCronDraft({ scheduleKind: event.target.value as CronCreateDraft["scheduleKind"] })
@@ -878,7 +878,7 @@ export const AgentSettingsPanel = ({
                           type="number"
                           min={1}
                           step={1}
-                          className="h-10 rounded-md border border-border bg-card/75 px-3 text-sm text-foreground outline-none"
+                          className="h-10 rounded-md border border-border bg-surface-3 px-3 text-sm text-foreground outline-none"
                           value={String(cronDraft.everyAmount ?? 30)}
                           onChange={(event) =>
                             updateCronDraft({
@@ -892,7 +892,7 @@ export const AgentSettingsPanel = ({
                           Unit
                         </span>
                         <select
-                          className="h-10 rounded-md border border-border bg-card/75 px-3 text-sm text-foreground outline-none"
+                          className="h-10 rounded-md border border-border bg-surface-3 px-3 text-sm text-foreground outline-none"
                           value={cronDraft.everyUnit ?? "minutes"}
                           onChange={(event) =>
                             updateCronDraft({
@@ -913,7 +913,7 @@ export const AgentSettingsPanel = ({
                             </span>
                             <input
                               type="time"
-                              className="h-10 rounded-md border border-border bg-card/75 px-3 text-sm text-foreground outline-none"
+                              className="h-10 rounded-md border border-border bg-surface-3 px-3 text-sm text-foreground outline-none"
                               value={cronDraft.everyAtTime ?? "09:00"}
                               onChange={(event) => updateCronDraft({ everyAtTime: event.target.value })}
                             />
@@ -923,7 +923,7 @@ export const AgentSettingsPanel = ({
                               Timezone
                             </span>
                             <input
-                              className="h-10 rounded-md border border-border bg-card/75 px-3 text-sm text-foreground outline-none"
+                              className="h-10 rounded-md border border-border bg-surface-3 px-3 text-sm text-foreground outline-none"
                               value={cronDraft.everyTimeZone ?? resolveLocalTimeZone()}
                               onChange={(event) => updateCronDraft({ everyTimeZone: event.target.value })}
                             />
@@ -939,7 +939,7 @@ export const AgentSettingsPanel = ({
                       </span>
                       <input
                         type="datetime-local"
-                        className="h-10 rounded-md border border-border bg-card/75 px-3 text-sm text-foreground outline-none"
+                        className="h-10 rounded-md border border-border bg-surface-3 px-3 text-sm text-foreground outline-none"
                         value={cronDraft.scheduleAt ?? ""}
                         onChange={(event) => updateCronDraft({ scheduleAt: event.target.value })}
                       />
@@ -950,7 +950,7 @@ export const AgentSettingsPanel = ({
               {cronCreateStep === 3 ? (
                 <div className="space-y-3 text-sm text-muted-foreground">
                   <div>Review your cron job configuration before creating it.</div>
-                  <div className="rounded-md border border-border/80 bg-card/75 px-3 py-2">
+                  <div className="rounded-md border border-border/80 bg-surface-2 px-3 py-2">
                     <div className="font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-foreground">
                       {cronDraft.name || "Untitled cron job"}
                     </div>
@@ -974,7 +974,7 @@ export const AgentSettingsPanel = ({
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  className="rounded-md border border-border/80 bg-card/75 px-3 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground transition hover:border-border hover:bg-muted/65 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="rounded-md border border-border/80 bg-surface-3 px-3 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground transition hover:border-border hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-60"
                   onClick={moveCronCreateBack}
                   disabled={cronCreateStep === 0 || cronCreateBusy}
                 >
@@ -983,7 +983,7 @@ export const AgentSettingsPanel = ({
                 {cronCreateStep < 3 ? (
                   <button
                     type="button"
-                    className="rounded-md border border-border/80 bg-card/75 px-3 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-foreground transition hover:border-border hover:bg-muted/65 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="rounded-md border border-border/80 bg-surface-3 px-3 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-foreground transition hover:border-border hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-60"
                     onClick={moveCronCreateNext}
                     disabled={
                       cronCreateBusy ||
@@ -996,7 +996,7 @@ export const AgentSettingsPanel = ({
                 ) : null}
                 <button
                   type="button"
-                  className="rounded-md border border-transparent bg-primary/90 px-3 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-primary-foreground disabled:cursor-not-allowed disabled:border-border disabled:bg-muted disabled:text-muted-foreground"
+                  className="rounded-md border border-transparent bg-primary px-3 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-primary-foreground transition hover:brightness-105 disabled:cursor-not-allowed disabled:border-border disabled:bg-muted disabled:text-muted-foreground"
                   onClick={() => {
                     void submitCronCreate();
                   }}
@@ -1258,8 +1258,8 @@ export const AgentBrainPanel = ({
                   type="button"
                   className={`rounded-full border px-3 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] transition ${
                     active
-                      ? "border-border bg-background text-foreground shadow-sm"
-                      : "border-transparent bg-muted/60 text-muted-foreground hover:border-border/80 hover:bg-muted"
+                      ? "border-border bg-surface-3 text-foreground"
+                      : "border-transparent bg-surface-2 text-muted-foreground hover:border-border/80 hover:bg-surface-3"
                   }`}
                   onClick={() => {
                     void handleTabChange(name);
@@ -1274,7 +1274,7 @@ export const AgentBrainPanel = ({
           <div className="mt-3 flex items-center justify-end gap-1">
             <button
               type="button"
-              className="rounded-md border border-border/70 bg-card/60 px-2.5 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground transition hover:bg-muted/70 disabled:opacity-50"
+              className="rounded-md border border-border/70 bg-surface-3 px-2.5 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground transition hover:bg-surface-2 disabled:opacity-50"
               disabled={agentFilesLoading || agentFilesSaving || agentFilesDirty}
               onClick={() => {
                 void reloadAgentFiles();
@@ -1287,8 +1287,8 @@ export const AgentBrainPanel = ({
               type="button"
               className={`rounded-md border px-2.5 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] transition ${
                 previewMode
-                  ? "border-border bg-background text-foreground"
-                  : "border-border/70 bg-card/60 text-muted-foreground hover:bg-muted/70"
+                  ? "border-border bg-surface-3 text-foreground"
+                  : "border-border/70 bg-surface-3 text-muted-foreground hover:bg-surface-2"
               }`}
               onClick={() => setPreviewMode(true)}
             >
@@ -1298,8 +1298,8 @@ export const AgentBrainPanel = ({
               type="button"
               className={`rounded-md border px-2.5 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] transition ${
                 previewMode
-                  ? "border-border/70 bg-card/60 text-muted-foreground hover:bg-muted/70"
-                  : "border-border bg-background text-foreground"
+                  ? "border-border/70 bg-surface-3 text-muted-foreground hover:bg-surface-2"
+                  : "border-border bg-surface-3 text-foreground"
               }`}
               onClick={() => setPreviewMode(false)}
             >
@@ -1309,7 +1309,7 @@ export const AgentBrainPanel = ({
 
           <div className="mt-3 min-h-0 flex-1 rounded-md bg-muted/30 p-2">
             {previewMode ? (
-              <div className="agent-markdown h-full overflow-y-auto rounded-md border border-border/80 bg-background/80 px-3 py-2 text-xs text-foreground">
+              <div className="agent-markdown h-full overflow-y-auto rounded-md border border-border/80 bg-surface-3 px-3 py-2 text-xs text-foreground">
                 {agentFiles[agentFileTab].content.trim().length === 0 ? (
                   <p className="text-muted-foreground">
                     {AGENT_FILE_PLACEHOLDERS[agentFileTab]}
@@ -1322,7 +1322,7 @@ export const AgentBrainPanel = ({
               </div>
             ) : (
               <textarea
-                className="h-full min-h-0 w-full resize-none overflow-y-auto rounded-md border border-border/80 bg-background/80 px-3 py-2 font-mono text-xs text-foreground outline-none"
+                className="h-full min-h-0 w-full resize-none overflow-y-auto rounded-md border border-border/80 bg-surface-3 px-3 py-2 font-mono text-xs text-foreground outline-none"
                 value={agentFiles[agentFileTab].content}
                 placeholder={
                   agentFiles[agentFileTab].content.trim().length === 0

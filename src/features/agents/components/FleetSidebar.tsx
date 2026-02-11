@@ -43,7 +43,7 @@ export const FleetSidebar = ({
 }: FleetSidebarProps) => {
   return (
     <aside
-      className="glass-panel fade-up-delay relative flex h-full w-full min-w-72 flex-col gap-3 p-3 xl:max-w-[320px]"
+      className="glass-panel fade-up-delay relative flex h-full w-full min-w-72 flex-col gap-3 bg-sidebar p-3 xl:max-w-[320px] xl:border-r xl:border-sidebar-border"
       data-testid="fleet-sidebar"
     >
       <div className="flex items-center justify-between gap-2 px-1">
@@ -51,7 +51,7 @@ export const FleetSidebar = ({
         <button
           type="button"
           data-testid="fleet-new-agent-button"
-          className="rounded-md border border-transparent bg-primary/90 px-3 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-primary-foreground transition hover:bg-primary disabled:cursor-not-allowed disabled:border-border disabled:bg-muted disabled:text-muted-foreground"
+          className="rounded-md border border-transparent bg-primary px-3 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-primary-foreground transition hover:brightness-105 disabled:cursor-not-allowed disabled:border-border disabled:bg-muted disabled:text-muted-foreground"
           onClick={onCreateAgent}
           disabled={createDisabled || createBusy}
         >
@@ -70,8 +70,8 @@ export const FleetSidebar = ({
               aria-pressed={active}
                 className={`rounded-md border px-2 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.13em] transition ${
                 active
-                  ? "border-border bg-muted text-foreground shadow-xs"
-                  : "border-border/80 bg-card/65 text-muted-foreground hover:border-border hover:bg-muted/70"
+                  ? "border-border bg-surface-2 text-foreground"
+                  : "border-border/80 bg-surface-1 text-muted-foreground hover:border-border hover:bg-surface-2"
               }`}
               onClick={() => onFilterChange(option.value)}
             >
@@ -96,8 +96,8 @@ export const FleetSidebar = ({
                   data-testid={`fleet-agent-row-${agent.agentId}`}
                   className={`group flex w-full items-center gap-3 rounded-md border px-3 py-2 text-left transition ${
                     selected
-                      ? "border-ring/40 bg-muted/60 shadow-xs"
-                      : "border-border/70 bg-card/65 hover:border-border hover:bg-muted/55"
+                      ? "border-ring/45 bg-surface-2"
+                      : "border-border/70 bg-surface-1 hover:border-border hover:bg-surface-2"
                   }`}
                   onClick={() => onSelectAgent(agent.agentId)}
                 >
