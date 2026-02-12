@@ -314,48 +314,6 @@ export const syncGatewaySessionSettings = async ({
 const doctorFixHint =
   "Run `npx openclaw doctor --fix` on the gateway host (or `pnpm openclaw doctor --fix` in a source checkout).";
 
-const MAX_AUTO_RETRY_ATTEMPTS = 20;
-const INITIAL_RETRY_DELAY_MS = 2_000;
-const MAX_RETRY_DELAY_MS = 30_000;
-const CONNECT_FAILED_CLOSE_CODE = 4008;
-const NON_RETRYABLE_CONNECT_ERROR_CODES = new Set([
-  "AUTH_FAILED",
-  "AUTH_REQUIRED",
-  "FORBIDDEN",
-  "INVALID_TOKEN",
-  "TOKEN_REQUIRED",
-  "UNAUTHENTICATED",
-  "UNAUTHORIZED",
-]);
-
-const parseGatewayCloseError = (message: string | null) => {
-  if (!message) return null;
-  const closeMatch = message.match(/^gateway closed \((\d+)\):\s*(.+)$/i);
-  if (!closeMatch) return null;
-  const closeCode = Number(closeMatch[1]);
-  if (!Number.isFinite(closeCode)) return null;
-  const reason = closeMatch[2]?.trim() ?? "";
-  const connectFailedMatch = reason.match(/^connect failed(?::\s*([A-Z0-9_]+)\b(.*))?$/i);
-  const gatewayCode = connectFailedMatch?.[1]?.toUpperCase() ?? null;
-  return { closeCode, reason, gatewayCode };
-};
-
-const isNonRetryableConnectError = (message: string | null) => {
-  const parsed = parseGatewayCloseError(message);
-  if (!parsed || parsed.closeCode !== CONNECT_FAILED_CLOSE_CODE) return false;
-  if (parsed.gatewayCode && NON_RETRYABLE_CONNECT_ERROR_CODES.has(parsed.gatewayCode)) {
-    return true;
-  }
-  const reason = parsed.reason.toLowerCase();
-  return (
-    reason.includes("auth") ||
-    reason.includes("unauthorized") ||
-    reason.includes("forbidden") ||
-    reason.includes("invalid token") ||
-    reason.includes("token required")
-  );
-};
-
 const formatGatewayError = (error: unknown) => {
   if (error instanceof GatewayResponseError) {
     if (error.code === "INVALID_REQUEST" && /invalid config/i.test(error.message)) {
@@ -397,9 +355,6 @@ export const useGatewayConnection = (
   const [client] = useState(() => new GatewayClient());
   const didAutoConnect = useRef(false);
   const loadedGatewaySettings = useRef<{ gatewayUrl: string; token: string } | null>(null);
-  const retryAttemptRef = useRef(0);
-  const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const wasManualDisconnectRef = useRef(false);
 
   const [gatewayUrl, setGatewayUrl] = useState(DEFAULT_UPSTREAM_GATEWAY_URL);
   const [token, setToken] = useState("");
@@ -409,12 +364,6 @@ export const useGatewayConnection = (
   const [status, setStatus] = useState<GatewayStatus>("disconnected");
   const [error, setError] = useState<string | null>(null);
   const [settingsLoaded, setSettingsLoaded] = useState(false);
-
-  const clearRetryTimer = useCallback(() => {
-    if (!retryTimerRef.current) return;
-    clearTimeout(retryTimerRef.current);
-    retryTimerRef.current = null;
-  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -470,15 +419,12 @@ export const useGatewayConnection = (
 
   useEffect(() => {
     return () => {
-      clearRetryTimer();
       client.disconnect();
     };
-  }, [clearRetryTimer, client]);
+  }, [client]);
 
   const connect = useCallback(async () => {
     setError(null);
-    wasManualDisconnectRef.current = false;
-    clearRetryTimer();
     try {
       await settingsCoordinator.flushPending();
       await client.connect({
@@ -492,34 +438,10 @@ export const useGatewayConnection = (
         client,
         upstreamGatewayUrl: gatewayUrl,
       });
-      retryAttemptRef.current = 0;
     } catch (err) {
-      const message = formatGatewayError(err);
-      const rawMessage = err instanceof Error ? err.message : null;
-      const canRetry =
-        gatewayUrl.trim().length > 0 &&
-        !wasManualDisconnectRef.current &&
-        !isNonRetryableConnectError(rawMessage);
-      if (!canRetry) {
-        setError(message);
-        return;
-      }
-      const attempt = retryAttemptRef.current;
-      if (attempt >= MAX_AUTO_RETRY_ATTEMPTS) {
-        setError(`${message} Auto-retry stopped after ${MAX_AUTO_RETRY_ATTEMPTS} attempts.`);
-        return;
-      }
-      const delay = Math.min(
-        INITIAL_RETRY_DELAY_MS * Math.pow(1.5, attempt),
-        MAX_RETRY_DELAY_MS
-      );
-      retryAttemptRef.current = attempt + 1;
-      retryTimerRef.current = setTimeout(() => {
-        void connect();
-      }, delay);
-      setError(message);
+      setError(formatGatewayError(err));
     }
-  }, [clearRetryTimer, client, gatewayUrl, settingsCoordinator, token]);
+  }, [client, gatewayUrl, settingsCoordinator, token]);
 
   useEffect(() => {
     if (didAutoConnect.current) return;
@@ -528,11 +450,6 @@ export const useGatewayConnection = (
     didAutoConnect.current = true;
     void connect();
   }, [connect, gatewayUrl, settingsLoaded]);
-
-  useEffect(() => {
-    retryAttemptRef.current = 0;
-    clearRetryTimer();
-  }, [clearRetryTimer, gatewayUrl, token]);
 
   useEffect(() => {
     if (!settingsLoaded) return;
@@ -563,11 +480,9 @@ export const useGatewayConnection = (
   }, [localGatewayDefaults]);
 
   const disconnect = useCallback(() => {
-    wasManualDisconnectRef.current = true;
-    clearRetryTimer();
     setError(null);
     client.disconnect();
-  }, [clearRetryTimer, client]);
+  }, [client]);
 
   const clearError = useCallback(() => {
     setError(null);
